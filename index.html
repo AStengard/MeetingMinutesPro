@@ -8,8 +8,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- html2pdf.js for direct client-side PDF generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- modern-screenshot: Uses native browser rendering for 100% pixel-identical capture of .a4-page -->
+  <script src="https://cdn.jsdelivr.net/npm/modern-screenshot@4.6.0/dist/index.js"></script>
+  <!-- jsPDF for assembling the exact A4 pages into a PDF file -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- Google Fonts: Inter for UI, Libre Baskerville for Formal Minutes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -117,7 +119,7 @@
       <!-- Top Single-Line Row -->
       <div class="h-16 flex items-center justify-between gap-4 whitespace-nowrap overflow-x-auto">
         <!-- Brand & Attribution strictly on one horizontal line -->
-        <div class="flex items-center gap-3 shrink-0 cursor-pointer group" onclick="goToHome()" title="Return to Home">
+        <div class="flex items-center gap-3 shrink-0 cursor-pointer group" onclick="goToHome()" title="Return to Home (Step 1)">
           <div class="w-9 h-9 rounded-xl bg-warm-dark text-[#FCFBF9] flex items-center justify-center shadow-sm shrink-0 group-hover:bg-warm-darkHover transition">
             <i data-lucide="scroll-text" class="w-5 h-5 text-amber-400"></i>
           </div>
@@ -154,7 +156,7 @@
         </div>
       </div>
 
-      <!-- 5-Step Spacious Navigation Bar -->
+      <!-- 5-Step Navigation Bar -->
       <nav aria-label="Progress" class="py-2.5 border-t border-warm-border/70 flex items-center justify-between gap-2 overflow-x-auto">
         <div class="flex items-center gap-1.5 sm:gap-2 min-w-max mx-auto">
           <button onclick="goToStep(1)" id="step-tab-1" class="step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition">
@@ -193,9 +195,7 @@
   <!-- MAIN WORKSPACE -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- ========================================================== -->
-    <!-- STEP 1: MEETING DETAILS (METADATA)                         -->
-    <!-- ========================================================== -->
+    <!-- STEP 1: MEETING DETAILS (METADATA) -->
     <section id="step-1" class="step-panel max-w-3xl mx-auto space-y-6">
       <div>
         <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Step 1 of 5</span>
@@ -256,7 +256,7 @@
             <div class="sm:col-span-3">
               <label for="meeting-location" class="block text-xs font-medium text-warm-muted mb-1">Location / Video Conference Link</label>
               <input id="meeting-location" type="text" placeholder="e.g., Conference Room A / Microsoft Teams"
-                oninput="updateMeta('meetingLocation', this.value); updateMeta('location', this.value)"
+                oninput="updateMeta('location', this.value)"
                 class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
             </div>
           </div>
@@ -276,9 +276,7 @@
       </div>
     </section>
 
-    <!-- ========================================================== -->
-    <!-- STEP 2: ATTENDEES & ROLES                                  -->
-    <!-- ========================================================== -->
+    <!-- STEP 2: ATTENDEES & ROLES -->
     <section id="step-2" class="step-panel hidden max-w-3xl mx-auto space-y-6">
       <div>
         <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Step 2 of 5</span>
@@ -338,9 +336,7 @@
       </div>
     </section>
 
-    <!-- ========================================================== -->
-    <!-- STEP 3: AGENDA BUILDER                                     -->
-    <!-- ========================================================== -->
+    <!-- STEP 3: AGENDA BUILDER -->
     <section id="step-3" class="step-panel hidden max-w-3xl mx-auto space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
@@ -392,9 +388,7 @@
       </div>
     </section>
 
-    <!-- ========================================================== -->
-    <!-- STEP 4: FOCUSED MINUTE TAKING (ITEM BY ITEM)               -->
-    <!-- ========================================================== -->
+    <!-- STEP 4: MINUTE TAKING -->
     <section id="step-4" class="step-panel hidden space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -412,7 +406,7 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <!-- Left Sidebar: Agenda Item Stepper -->
+        <!-- Left Sidebar: Agenda Stepper -->
         <aside class="lg:col-span-4 bg-warm-card rounded-2xl border border-warm-border p-4 shadow-sm space-y-3">
           <div class="flex items-center justify-between px-1">
             <span class="text-xs font-bold uppercase tracking-wider text-warm-muted">Agenda Navigation</span>
@@ -429,11 +423,8 @@
       </div>
     </section>
 
-    <!-- ========================================================== -->
-    <!-- STEP 5: FINALIZE ATTENDANCE, REVIEW & SAVE TO REGISTER     -->
-    <!-- ========================================================== -->
+    <!-- STEP 5: FINALIZE ATTENDANCE, REVIEW & SAVE TO REGISTER -->
     <section id="step-5" class="step-panel hidden space-y-8">
-      <!-- Top Header & Save Actions -->
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
         <div>
           <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Step 5 of 5</span>
@@ -450,6 +441,10 @@
             <i data-lucide="bookmark-plus" class="w-4 h-4 text-amber-800"></i>
             <span>Save as Template</span>
           </button>
+          <button id="step5-dl-btn" onclick="downloadCurrentWorkspacePDF()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold shadow-sm transition">
+            <i data-lucide="download" class="w-4 h-4 text-amber-400"></i>
+            <span>Download PDF Now</span>
+          </button>
           <button id="save-register-btn" onclick="saveCurrentMeetingToRegister()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-800 hover:bg-amber-900 text-white text-sm font-semibold shadow-sm transition">
             <i data-lucide="archive-restore" class="w-4 h-4"></i>
             <span>Save to Meetings Register</span>
@@ -457,7 +452,7 @@
         </div>
       </div>
 
-      <!-- FINAL ATTENDANCE & CLOSING TIME PANEL (Moved here so you fill it in when you know!) -->
+      <!-- Final Attendance & Adjournment Panel -->
       <div class="bg-warm-card rounded-2xl border border-warm-border p-6 sm:p-7 shadow-sm space-y-6 no-print">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-warm-border">
           <div class="flex items-center gap-2.5">
@@ -470,7 +465,7 @@
             </div>
           </div>
 
-          <!-- Meeting End Time Input -->
+          <!-- Adjournment Input -->
           <div class="flex items-center gap-3 bg-[#FAF8F4] px-4 py-2 rounded-xl border border-warm-border">
             <label for="final-end-time" class="text-xs font-semibold uppercase tracking-wider text-warm-muted whitespace-nowrap">Meeting Adjourned:</label>
             <input id="final-end-time" type="time" oninput="updateMeta('endTime', this.value); renderA4Pages();"
@@ -478,16 +473,16 @@
           </div>
         </div>
 
-        <!-- Present Members Partial Attendance List -->
+        <!-- Present Attendees Partial List -->
         <div id="final-attendance-list" class="space-y-3"></div>
       </div>
 
-      <!-- LIVE PAGINATED PURE-WHITE A4 PREVIEW -->
+      <!-- Live A4 Document Preview -->
       <div class="space-y-3">
         <div class="flex items-center justify-between max-w-[794px] mx-auto px-1 no-print">
           <span class="text-xs font-semibold uppercase tracking-wider text-warm-muted flex items-center gap-1.5">
             <i data-lucide="file-check-2" class="w-4 h-4 text-amber-800"></i>
-            <span>Formal A4 Document Preview (Pure White Print Background)</span>
+            <span>Formal A4 Document Preview</span>
           </span>
           <span id="page-count-indicator" class="text-xs font-medium text-warm-subtle">1 Page</span>
         </div>
@@ -498,9 +493,7 @@
       </div>
     </section>
 
-    <!-- ========================================================== -->
-    <!-- TEMPLATES MANAGER PAGE                                     -->
-    <!-- ========================================================== -->
+    <!-- TEMPLATES MANAGER FULL PAGE -->
     <section id="page-templates" class="hidden max-w-4xl mx-auto space-y-6">
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
         <div class="flex items-center gap-3">
@@ -519,13 +512,13 @@
       </div>
 
       <div class="bg-warm-card rounded-2xl border border-warm-border p-6 shadow-sm space-y-6">
-        <!-- Save Current Workspace as Template Bar -->
+        <!-- Save Workspace as Template -->
         <div class="p-4 rounded-xl bg-[#FAF8F4] border border-warm-border space-y-3">
           <div class="text-xs font-semibold uppercase tracking-wider text-warm-muted">Save Current Workspace as New Template</div>
           <div class="flex flex-col sm:flex-row gap-2.5">
             <input id="new-template-name" type="text" placeholder="Template Name (e.g., Standard Board Meeting — BRF)"
               class="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
-            <button onclick="saveWorkspaceAsTemplate()" class="px-5 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold inline-flex items-center justify-center gap-1.5 shrink-0 transition">
+            <button id="save-tpl-btn" onclick="saveWorkspaceAsTemplate()" class="px-5 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold inline-flex items-center justify-center gap-1.5 shrink-0 transition">
               <i data-lucide="plus" class="w-4 h-4"></i>
               <span>Save as Template</span>
             </button>
@@ -543,9 +536,7 @@
       </div>
     </section>
 
-    <!-- ========================================================== -->
-    <!-- MEETINGS REGISTER PAGE                                     -->
-    <!-- ========================================================== -->
+    <!-- MEETINGS REGISTER FULL PAGE -->
     <section id="page-register" class="hidden max-w-5xl mx-auto space-y-6">
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
         <div class="flex items-center gap-3">
@@ -554,7 +545,7 @@
           </div>
           <div>
             <h1 class="text-2xl sm:text-3xl font-serif font-bold text-warm-text">Saved Meetings Register</h1>
-            <p class="mt-1 text-sm text-warm-muted">Download official PDFs, reopen past minutes for editing, or manage your archived meetings.</p>
+            <p class="mt-1 text-sm text-warm-muted">Download official PDFs, reopen past minutes for editing, or manage archived records.</p>
           </div>
         </div>
         <button onclick="goToHome()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
@@ -568,7 +559,7 @@
 
   </main>
 
-  <!-- PERSISTENT MINIMAL FOOTER (Single attribution in footer) -->
+  <!-- PERSISTENT FOOTER -->
   <footer class="border-t border-warm-border bg-[#FAF8F3] py-4 px-4 sm:px-6 lg:px-8 mt-auto no-print">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-warm-subtle">
       <span>Meeting Minutes Pro — Formal Governance &amp; Protocol Suite</span>
@@ -576,91 +567,10 @@
     </div>
   </footer>
 
-  <!-- HIDDEN OFF-SCREEN MEASURING CONTAINER FOR ACCURATE A4 PAGINATION -->
+  <!-- MEASURING SANDBOX FOR ACCURATE A4 PAGINATION -->
   <div id="measure-sandbox" class="fixed -left-[9999px] top-0 w-[666px] pointer-events-none opacity-0" aria-hidden="true"></div>
 
   <!-- RESET CONFIRMATION MODAL -->
-
-  <!-- TEMPLATES MANAGER MODAL -->
-  <div id="templates-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/40 backdrop-blur-xs p-4 no-print">
-    <div class="bg-warm-card border border-warm-border rounded-2xl max-w-3xl w-full max-h-[88vh] flex flex-col shadow-xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-warm-border flex items-center justify-between bg-[#FAF8F3]">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-amber-900/10 text-amber-900 flex items-center justify-center">
-            <i data-lucide="layout-template" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-serif font-bold text-warm-text">Meeting Templates</h3>
-            <p class="text-xs text-warm-muted">Load an existing template into the workspace, edit its details, or save your current setup as a reusable template.</p>
-          </div>
-        </div>
-        <button onclick="closeTemplatesModal()" class="p-1.5 rounded-lg text-warm-muted hover:text-warm-text hover:bg-warm-surface">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div class="p-6 overflow-y-auto space-y-5 flex-1">
-        <!-- Save Current Workspace as Template Bar -->
-        <div class="p-4 rounded-xl bg-[#FAF8F4] border border-warm-border space-y-3">
-          <div class="text-xs font-semibold uppercase tracking-wider text-warm-muted">Save Current Workspace as New Template</div>
-          <div class="flex flex-col sm:flex-row gap-2.5">
-            <input id="new-template-name" type="text" placeholder="Template Name (e.g., Standard Board Meeting — BRF)"
-              class="flex-1 px-3.5 py-2 rounded-xl bg-white border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
-            <button onclick="saveWorkspaceAsTemplate()" class="px-4 py-2 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-xs font-semibold inline-flex items-center justify-center gap-1.5 shrink-0 transition">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-              <span>Save Current as Template</span>
-            </button>
-          </div>
-          <div id="editing-template-banner" class="hidden items-center justify-between gap-2 pt-2 border-t border-warm-border text-xs text-amber-900">
-            <span id="editing-template-label" class="font-medium">Currently editing template</span>
-            <button onclick="updateCurrentlyEditedTemplate()" class="px-3 py-1 rounded-lg bg-amber-800 hover:bg-amber-900 text-white font-semibold transition">
-              Overwrite Template with Current Workspace
-            </button>
-          </div>
-        </div>
-
-        <!-- Templates List -->
-        <div class="space-y-2.5" id="templates-list-container"></div>
-      </div>
-
-      <div class="px-6 py-3.5 border-t border-warm-border bg-[#FAF8F3] flex justify-end">
-        <button onclick="closeTemplatesModal()" class="px-4 py-2 rounded-xl border border-warm-border bg-warm-card hover:bg-warm-surface text-xs font-semibold text-warm-text">
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MEETINGS REGISTER MODAL -->
-  <div id="register-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/40 backdrop-blur-xs p-4 no-print">
-    <div class="bg-warm-card border border-warm-border rounded-2xl max-w-4xl w-full max-h-[88vh] flex flex-col shadow-xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-warm-border flex items-center justify-between bg-[#FAF8F3]">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-amber-900/10 text-amber-900 flex items-center justify-center">
-            <i data-lucide="archive" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-serif font-bold text-warm-text">Saved Meetings Register</h3>
-            <p class="text-xs text-warm-muted">Download official PDFs, reopen past minutes for editing, or manage your archived board meetings.</p>
-          </div>
-        </div>
-        <button onclick="closeRegisterModal()" class="p-1.5 rounded-lg text-warm-muted hover:text-warm-text hover:bg-warm-surface">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div class="p-6 overflow-y-auto space-y-3 flex-1" id="register-list-container"></div>
-
-      <div class="px-6 py-3.5 border-t border-warm-border bg-[#FAF8F3] flex items-center justify-between">
-        <span class="text-xs text-warm-subtle">All meetings are stored locally in your browser register.</span>
-        <button onclick="closeRegisterModal()" class="px-4 py-2 rounded-xl border border-warm-border bg-warm-card hover:bg-warm-surface text-xs font-semibold text-warm-text">
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- RESET CONFIRMATION MODAL (No window.confirm!) -->
   <div id="reset-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/40 backdrop-blur-xs p-4 no-print">
     <div class="bg-warm-card border border-warm-border rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
       <div class="flex items-center gap-3">
@@ -669,7 +579,7 @@
         </div>
         <div>
           <h3 class="text-base font-bold text-warm-text">Reset All Meeting Data?</h3>
-          <p class="text-xs text-warm-muted mt-0.5">This will clear current minutes and load a clean blank template.</p>
+          <p class="text-xs text-warm-muted mt-0.5">This will clear the current minutes and load a clean blank template.</p>
         </div>
       </div>
       <div class="flex items-center justify-end gap-2.5 pt-2">
@@ -695,7 +605,6 @@
     let activeTemplateId = null;
     let activeRegisterId = null;
 
-    // Clean empty state for starting the application without sample data
     function getBlankState() {
       return {
         meta: {
@@ -717,7 +626,6 @@
       };
     }
 
-    // Example data used for the preloaded default template
     function getSampleState() {
       return {
         meta: {
@@ -792,7 +700,7 @@
           {
             id: 'a8',
             title: 'Closing of the Meeting',
-            discussion: 'The Chairperson thanked all participants and declared the board meeting adjourned.',
+            discussion: 'The Chairperson thanked all participants and declared the board meeting closed.',
             decision: '',
             attachments: ''
           }
@@ -907,9 +815,7 @@
         .replace(/'/g, '&#39;');
     }
 
-    // ==========================================================
-    // NAVIGATION BETWEEN STEPS & PAGES
-    // ==========================================================
+    // NAVIGATION
     function updateStepperUI(activeStep) {
       for (let i = 1; i <= 5; i++) {
         const tab = document.getElementById(`step-tab-${i}`);
@@ -929,7 +835,7 @@
     }
 
     function goToHome() {
-      goToStep(currentStep || 1);
+      goToStep(1);
     }
 
     function goToStep(stepNumber) {
@@ -939,7 +845,7 @@
       const regPage = document.getElementById('page-register');
       if (tplPage) tplPage.classList.add('hidden');
       if (regPage) regPage.classList.add('hidden');
-      
+
       updateStepperUI(stepNumber);
 
       for (let i = 1; i <= 5; i++) {
@@ -962,11 +868,11 @@
     function openTemplatesPage() {
       for (let i = 1; i <= 5; i++) {
         const p = document.getElementById(`step-${i}`);
-        if(p) p.classList.add('hidden');
+        if (p) p.classList.add('hidden');
       }
       document.getElementById('page-register').classList.add('hidden');
       document.getElementById('page-templates').classList.remove('hidden');
-      updateStepperUI(0); // Mark stepper inactive
+      updateStepperUI(0);
       renderTemplatesList();
       window.scrollTo({ top: 0, behavior: 'smooth' });
       lucide.createIcons();
@@ -975,19 +881,17 @@
     function openRegisterPage() {
       for (let i = 1; i <= 5; i++) {
         const p = document.getElementById(`step-${i}`);
-        if(p) p.classList.add('hidden');
+        if (p) p.classList.add('hidden');
       }
       document.getElementById('page-templates').classList.add('hidden');
       document.getElementById('page-register').classList.remove('hidden');
-      updateStepperUI(0); // Mark stepper inactive
+      updateStepperUI(0);
       renderRegisterList();
       window.scrollTo({ top: 0, behavior: 'smooth' });
       lucide.createIcons();
     }
 
-    // ==========================================================
-    // STEP 1: METADATA
-    // ==========================================================
+    // STEP 1
     function syncStep1Inputs() {
       document.getElementById('org-name').value = state.meta.orgName || '';
       document.getElementById('org-number').value = state.meta.orgNumber || '';
@@ -1002,9 +906,7 @@
       saveState();
     }
 
-    // ==========================================================
-    // STEP 2: ATTENDEES & ROLES
-    // ==========================================================
+    // STEP 2
     function renderStep2() {
       const strip = document.getElementById('role-status-strip');
       const chair = state.attendees.filter(a => a.role === 'Chairperson' || a.role === 'Chairperson & Attester');
@@ -1126,9 +1028,7 @@
       renderStep2();
     }
 
-    // ==========================================================
-    // STEP 3: AGENDA BUILDER
-    // ==========================================================
+    // STEP 3
     function renderStep3() {
       document.getElementById('agenda-count-badge').textContent = `${state.agenda.length} ${state.agenda.length === 1 ? 'item' : 'items'}`;
       const list = document.getElementById('setup-agenda-list');
@@ -1151,7 +1051,7 @@
           <div class="cursor-grab text-stone-400 hover:text-warm-text px-1" title="Drag to reorder">
             <i data-lucide="grip-vertical" class="w-4 h-4"></i>
           </div>
-          <span class="px-2.5 py-1 rounded-lg bg-warm-surface text-xs font-serif font-bold text-amber-950 shrink-0">
+          <span class="px-2.5 py-1 rounded-lg bg-warm-surface text-xs font-serif font-bold text-amber-950 shrink-0 whitespace-nowrap">
             § ${idx + 1}
           </span>
           <input type="text" value="${escapeHtml(item.title)}"
@@ -1259,9 +1159,7 @@
       renderStep3();
     }
 
-    // ==========================================================
-    // STEP 4: ITEM-BY-ITEM MINUTE TAKING
-    // ==========================================================
+    // STEP 4
     function renderStep4() {
       if (state.agenda.length === 0) {
         state.agenda.push({ id: 'a_' + Date.now(), title: 'Opening of the Meeting', discussion: '', decision: '', attachments: '' });
@@ -1304,7 +1202,7 @@
       editor.innerHTML = `
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-warm-border">
           <div class="flex items-center gap-2.5 flex-1 min-w-[240px]">
-            <span class="px-3 py-1.5 rounded-xl bg-amber-900/10 text-amber-950 font-serif font-bold text-sm shrink-0">
+            <span class="px-3 py-1.5 rounded-xl bg-amber-900/10 text-amber-950 font-serif font-bold text-sm shrink-0 whitespace-nowrap">
               § ${activeAgendaIndex + 1}
             </span>
             <input type="text" value="${escapeHtml(item.title)}"
@@ -1395,7 +1293,7 @@
           </div>
         ` : ''}
 
-        <!-- Bottom Prev / Next Item Controls -->
+        <!-- Bottom Controls -->
         <div class="flex items-center justify-between pt-4 border-t border-warm-border">
           <button onclick="selectAgendaItem(${activeAgendaIndex - 1})" ${activeAgendaIndex === 0 ? 'disabled' : ''}
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-warm-border bg-warm-card hover:bg-warm-surface text-xs sm:text-sm font-medium text-warm-text disabled:opacity-40 transition">
@@ -1465,9 +1363,7 @@
       renderStep4();
     }
 
-    // ==========================================================
-    // STEP 5: FINALIZE ATTENDANCE & LIVE A4 DOCUMENT PREVIEW
-    // ==========================================================
+    // STEP 5
     function renderStep5() {
       document.getElementById('final-end-time').value = state.meta.endTime || '';
       renderFinalAttendanceControl();
@@ -1542,7 +1438,6 @@
         if (!excludedItems.includes(i)) attended.push(i + 1);
       }
       if (attended.length === 0) return 'Absent for all items';
-      // Check if contiguous range
       const min = attended[0];
       const max = attended[attended.length - 1];
       const isContiguous = attended.length === (max - min + 1);
@@ -1594,14 +1489,11 @@
       renderA4Pages();
     }
 
-    // ==========================================================
-    // PAGINATED PURE-WHITE A4 RENDERER
-    // ==========================================================
+    // A4 DOCUMENT RENDERER & PAGINATION
     function buildDocumentBlocks(targetState = state) {
       const blocks = [];
       const m = targetState.meta;
 
-      // 1. Formal Header + Metadata Table Block
       const chair = targetState.attendees.filter(a => a.role === 'Chairperson' || a.role === 'Chairperson & Attester').map(a => a.name).join(', ') || '—';
       const sec = targetState.attendees.filter(a => a.role === 'Secretary').map(a => a.name).join(', ') || '—';
       const att = targetState.attendees.filter(a => a.role === 'Attester' || a.role === 'Chairperson & Attester').map(a => a.name).join(', ') || '—';
@@ -1638,7 +1530,6 @@
         </div>
       `);
 
-      // 2. Attendance Roster Block
       blocks.push(`
         <div class="mb-6 pb-4 border-b border-stone-300 text-xs space-y-2">
           <div class="font-serif font-bold uppercase tracking-wider text-[11px] text-stone-900">Attendance &amp; Voting Roster</div>
@@ -1669,13 +1560,12 @@
         </div>
       `);
 
-      // 3. Individual Agenda Item Blocks
       targetState.agenda.forEach((item, idx) => {
         const isLast = idx === targetState.agenda.length - 1;
         blocks.push(`
           <div class="mb-5 pb-3 border-b border-stone-200/80 last:border-b-0">
             <h2 class="text-sm font-serif font-bold text-stone-950 flex items-baseline gap-2">
-              <span>§ ${idx + 1}</span>
+              <span class="whitespace-nowrap">§ ${idx + 1}</span>
               <span>${escapeHtml(item.title || 'Untitled Agenda Item')}</span>
             </h2>
             ${item.discussion && item.discussion.trim() ? `
@@ -1692,7 +1582,7 @@
                 Attachment: ${escapeHtml(item.attachments)}
               </div>
             ` : ''}
-            ${isLast && m.endTime ? `
+            ${isLast && m.endTime && !(item.discussion && item.discussion.includes(m.endTime)) ? `
               <div class="mt-1.5 text-xs font-medium text-stone-800">
                 The meeting was declared adjourned at ${escapeHtml(m.endTime)}.
               </div>
@@ -1701,7 +1591,6 @@
         `);
       });
 
-      // 4. Formal Signatures Block (Never split across pages)
       const signers = [];
       targetState.attendees.filter(a => a.role === 'Secretary').forEach(p => signers.push({ name: p.name, label: 'Secretary (Minutes)' }));
       targetState.attendees.filter(a => a.role === 'Chairperson' || a.role === 'Chairperson & Attester').forEach(p => signers.push({ name: p.name, label: p.role }));
@@ -1795,9 +1684,7 @@
       container.innerHTML = html;
     }
 
-    // ==========================================================
-    // TEMPLATES MANAGEMENT (LOAD, SAVE, EDIT, DELETE)
-    // ==========================================================
+    // TEMPLATES
     function openSaveTemplateFromCurrent() {
       const suggested = state.meta.orgName
         ? `${state.meta.orgName} — Standard Template`
@@ -1919,7 +1806,8 @@
       const idx = templates.findIndex(t => t.id === activeTemplateId);
       if (idx === -1) return;
 
-      templates[idx].data = JSON.parse(JSON.stringify(state));
+      const copy = JSON.parse(JSON.stringify(state));
+      templates[idx].data = copy;
       templates[idx].updatedAt = new Date().toISOString().slice(0, 10);
       saveTemplates();
       renderTemplatesList();
@@ -1952,9 +1840,7 @@
       renderTemplatesList();
     }
 
-    // ==========================================================
-    // MEETINGS REGISTER (SAVE IN STEP 5, VIEW & DOWNLOAD PDF)
-    // ==========================================================
+    // MEETINGS REGISTER
     function saveCurrentMeetingToRegister() {
       const btn = document.getElementById('save-register-btn');
       const copy = JSON.parse(JSON.stringify(state));
@@ -1979,14 +1865,13 @@
       saveRegister();
 
       if (btn) {
-        const orig = btn.innerHTML;
         btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Saved to Register!</span>';
         lucide.createIcons();
         setTimeout(() => {
-          btn.innerHTML = orig;
+          btn.innerHTML = '<i data-lucide="archive-restore" class="w-4 h-4"></i><span>Save to Meetings Register</span>';
           lucide.createIcons();
           openRegisterPage();
-        }, 650);
+        }, 600);
       } else {
         openRegisterPage();
       }
@@ -2081,72 +1966,105 @@
       renderRegisterList();
     }
 
-    // PDF Download Logic for both Registers and Templates
+    // ==========================================================
+    // 100% PIXEL-IDENTICAL A4 PREVIEW TO PDF ENGINE
+    // Renders the exact HTML from generatePaginatedA4Html(data)
+    // and captures each .a4-page using the browser's native
+    // renderer (modern-screenshot) so it is 100% identical to Step 5.
+    // ==========================================================
     async function generateAndDownloadPDF(data, filename, btnId) {
-      const btn = document.getElementById(btnId);
+      const btn = btnId ? document.getElementById(btnId) : null;
       let origHtml = '';
       if (btn) {
         origHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Wait...</span>';
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Exporting...</span>';
         lucide.createIcons();
       }
 
-      // 1. Create a full-screen loading overlay to gracefully hide the rendering process
+      // Create an isolated, on-screen stage behind a subtle loading overlay so the browser
+      // paints the exact .a4-page DOM elements at 794x1122px with full fonts and Tailwind styles.
       const overlay = document.createElement('div');
-      overlay.className = 'fixed inset-0 z-[99999] bg-[#F5F2EB] flex flex-col items-center justify-center';
+      overlay.className = 'fixed inset-0 z-[99999] bg-[#F5F2EB]/95 backdrop-blur-xs flex flex-col items-center justify-center no-print';
       overlay.innerHTML = `
-        <div class="w-12 h-12 rounded-full border-4 border-amber-900/20 border-t-amber-800 animate-spin mb-4"></div>
-        <div class="text-xl font-serif font-bold text-warm-text">Generating Official PDF</div>
-        <div class="text-sm text-warm-muted mt-2">Please wait a moment while we format the pages...</div>
+        <div class="w-11 h-11 rounded-full border-4 border-amber-900/20 border-t-amber-800 animate-spin mb-3"></div>
+        <div class="text-base font-serif font-bold text-warm-text">Preparing Exact A4 PDF...</div>
+        <div class="text-xs text-warm-muted mt-1">Capturing formal document pages</div>
       `;
       document.body.appendChild(overlay);
 
-      // 2. Create the container physically visible on top of everything, but hidden beneath the overlay
-      // html2canvas requires the element to be actively visible in the viewport to prevent blank renders.
-      const container = document.createElement('div');
-      container.className = 'pdf-export-mode';
-      container.style.position = 'absolute';
-      container.style.top = '0';
-      container.style.left = '0';
-      container.style.width = '794px';
-      container.style.zIndex = '99998';
-      container.style.backgroundColor = '#FFFFFF';
-      
+      const stage = document.createElement('div');
+      stage.className = 'pdf-export-mode';
+      stage.style.cssText = 'position: fixed; top: 0; left: 0; width: 794px; z-index: 99990; pointer-events: none; background: #FFFFFF;';
+
+      // Use the EXACT same HTML generator that powers the Step 5 Formal A4 Document Preview
       const { html } = generatePaginatedA4Html(data);
-      container.innerHTML = html;
-      document.body.appendChild(container);
+      stage.innerHTML = html;
+      document.body.appendChild(stage);
 
       try {
-        // Wait a fraction of a second for Tailwind classes to fully apply and the browser to paint
-        await new Promise(r => setTimeout(r, 400));
+        // Ensure Google Fonts (Libre Baskerville & Inter) and layout are completely ready
+        if (document.fonts && document.fonts.ready) {
+          await document.fonts.ready;
+        }
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        await new Promise(r => setTimeout(r, 150));
 
-        const opt = {
-          margin: 0,
-          filename,
-          image: { type: 'jpeg', quality: 1.0 },
-          html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            backgroundColor: '#FFFFFF', 
-            windowWidth: 794,
-            scrollY: 0
-          },
-          jsPDF: { unit: 'px', format: [794, 1122], orientation: 'portrait' }
-        };
-        await html2pdf().set(opt).from(container).save();
+        const pages = Array.from(stage.querySelectorAll('.a4-page'));
+        if (pages.length === 0) {
+          throw new Error('No A4 pages found to export');
+        }
+
+        const jsPDFConstructor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        const pdf = new jsPDFConstructor({
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait',
+          compress: true
+        });
+
+        for (let i = 0; i < pages.length; i++) {
+          const pageEl = pages[i];
+          if (i > 0) {
+            pdf.addPage('a4', 'portrait');
+          }
+
+          // Capture the exact .a4-page element at 2.5x retina resolution
+          const canvas = await window.modernScreenshot.domToCanvas(pageEl, {
+            scale: 2.5,
+            width: 794,
+            height: 1122,
+            backgroundColor: '#FFFFFF',
+            style: {
+              margin: '0',
+              boxShadow: 'none',
+              transform: 'none'
+            }
+          });
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.98);
+          pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        }
+
+        pdf.save(filename);
       } catch (err) {
-        console.error('PDF export error:', err);
+        console.error('Exact A4 capture failed:', err);
       } finally {
-        // 3. Clean up the DOM
-        document.body.removeChild(container);
-        document.body.removeChild(overlay);
+        if (stage.parentNode) stage.parentNode.removeChild(stage);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = origHtml;
           lucide.createIcons();
         }
       }
+    }
+
+    function downloadCurrentWorkspacePDF() {
+      const safeOrg = (state.meta?.orgName || 'Board-Minutes').replace(/[^a-zA-Z0-9-_]/g, '_');
+      const safeDate = state.meta?.meetingDate || 'Document';
+      const filename = `${safeOrg}_Minutes_${safeDate}.pdf`;
+      generateAndDownloadPDF(state, filename, 'step5-dl-btn');
     }
 
     function downloadRegisteredMeetingPDF(regId) {
@@ -2166,9 +2084,7 @@
       generateAndDownloadPDF(entry.data, filename, `tpl-dl-btn-${tplId}`);
     }
 
-    // ==========================================================
     // RESET MODAL
-    // ==========================================================
     function openResetModal() {
       const modal = document.getElementById('reset-modal');
       modal.classList.remove('hidden');
@@ -2191,7 +2107,7 @@
       goToStep(1);
     }
 
-    // Initialize application on page load
+    // INITIALIZATION
     window.addEventListener('DOMContentLoaded', () => {
       updateRegisterCountPill();
       syncStep1Inputs();
