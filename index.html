@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#F5F2EB]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Minutes Pro — By Alfred Stengard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- modern-screenshot: Uses native browser rendering for 100% pixel-identical capture of .a4-page -->
+  <script src="https://cdn.jsdelivr.net/npm/modern-screenshot@4.6.0/dist/index.js"></script>
+  <!-- jsPDF for assembling the exact A4 pages into a PDF file -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Google Fonts: Inter for UI, Libre Baskerville for Formal Minutes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Libre Baskerville', 'Georgia', 'serif'],
+          },
+          colors: {
+            warm: {
+              bg: '#F5F2EB',
+              card: '#FCFBF9',
+              surface: '#F0ECE1',
+              border: '#E4DEC9',
+              borderStrong: '#D3CBB2',
+              text: '#1C1917',
+              muted: '#57534E',
+              subtle: '#78716C',
+              accent: '#9A3412',
+              accentHover: '#7C2D12',
+              accentSoft: '#FFEDD5',
+              dark: '#292524',
+              darkHover: '#1C1917'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Smooth custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F5F2EB;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #D3CBB2;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A8A29E;
+    }
+
+    /* Pure White A4 Document Styling for Preview & PDF Export */
+    .a4-page {
+      width: 794px;
+      min-height: 1122px;
+      height: 1122px;
+      background-color: #FFFFFF !important;
+      color: #111827 !important;
+      padding: 54px 64px 52px 64px;
+      box-sizing: border-box;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 12px 32px -8px rgba(28, 25, 23, 0.12), 0 0 1px 1px rgba(28, 25, 23, 0.06);
+      margin: 0 auto 2rem auto;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    /* Exporting mode removes preview margin/shadows so html2pdf captures crisp white pages */
+    .pdf-export-mode .a4-page {
+      margin: 0 !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+
+    /* Native Browser Print Fallback */
+    @media print {
+      body {
+        background: #FFFFFF !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      #a4-preview-wrapper {
+        padding: 0 !important;
+        background: #FFFFFF !important;
+      }
+      .a4-page {
+        margin: 0 !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        height: 100vh !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-warm-bg text-warm-text font-sans antialiased selection:bg-amber-200 selection:text-stone-900">
+
+  <!-- TOP NAVIGATION BAR (Single Row Header + Stepper) -->
+  <header class="sticky top-0 z-40 bg-[#FAF8F3]/95 backdrop-blur-md border-b border-warm-border no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Top Single-Line Row -->
+      <div class="h-16 flex items-center justify-between gap-4 whitespace-nowrap overflow-x-auto">
+        <!-- Brand & Attribution strictly on one horizontal line -->
+        <div class="flex items-center gap-3 shrink-0 cursor-pointer group" onclick="goToHome()" title="Return to Home (Step 1)">
+          <div class="w-9 h-9 rounded-xl bg-warm-dark text-[#FCFBF9] flex items-center justify-center shadow-sm shrink-0 group-hover:bg-warm-darkHover transition">
+            <i data-lucide="scroll-text" class="w-5 h-5 text-amber-400"></i>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="font-serif font-bold text-base sm:text-lg tracking-tight text-warm-text whitespace-nowrap group-hover:text-amber-900 transition">
+              Meeting Minutes Pro
+            </span>
+            <span class="text-stone-300">|</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warm-surface text-warm-muted border border-warm-border whitespace-nowrap">
+              By Alfred Stengard
+            </span>
+          </div>
+        </div>
+
+        <!-- Right Controls: Save Status & Actions -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <span id="save-indicator" class="hidden sm:inline-flex items-center gap-1.5 text-xs text-warm-subtle px-2.5 py-1 rounded-lg bg-warm-surface/70 border border-warm-border/60">
+            <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+            <span>Draft saved</span>
+          </span>
+          <button onclick="openTemplatesPage()" title="Manage & Load Templates" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-warm-text hover:bg-warm-surface bg-warm-card border border-warm-border transition">
+            <i data-lucide="layout-template" class="w-3.5 h-3.5 text-amber-800"></i>
+            <span>Templates</span>
+          </button>
+          <button onclick="openRegisterPage()" title="View Saved Meetings Register" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-warm-text hover:bg-warm-surface bg-warm-card border border-warm-border transition">
+            <i data-lucide="archive" class="w-3.5 h-3.5 text-amber-800"></i>
+            <span>Meetings Register</span>
+            <span id="register-count-pill" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-900/15 text-amber-950">0</span>
+          </button>
+          <button onclick="openResetModal()" title="Clear all fields and start fresh" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-800 hover:bg-rose-50 bg-warm-card border border-warm-border transition">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>New / Reset</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5-Step Navigation Bar -->
+      <nav aria-label="Progress" class="py-2.5 border-t border-warm-border/70 flex items-center justify-between gap-2 overflow-x-auto">
+        <div class="flex items-center gap-1.5 sm:gap-2 min-w-max mx-auto">
+          <button onclick="goToStep(1)" id="step-tab-1" class="step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition">
+            <span class="step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold">1</span>
+            <span>Meeting Details</span>
+          </button>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-stone-400 shrink-0"></i>
+
+          <button onclick="goToStep(2)" id="step-tab-2" class="step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition">
+            <span class="step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold">2</span>
+            <span>Attendees &amp; Roles</span>
+          </button>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-stone-400 shrink-0"></i>
+
+          <button onclick="goToStep(3)" id="step-tab-3" class="step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition">
+            <span class="step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold">3</span>
+            <span>Agenda</span>
+          </button>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-stone-400 shrink-0"></i>
+
+          <button onclick="goToStep(4)" id="step-tab-4" class="step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition">
+            <span class="step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold">4</span>
+            <span>Minute Taking</span>
+          </button>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-stone-400 shrink-0"></i>
+
+          <button onclick="goToStep(5)" id="step-tab-5" class="step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition">
+            <span class="step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold">5</span>
+            <span>Finalize &amp; Save</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- STEP 1: MEETING DETAILS (METADATA) -->
+    <section id="step-1" class="step-panel max-w-3xl mx-auto space-y-6">
+      <div>
+        <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Step 1 of 5</span>
+        <h1 class="mt-1 text-2xl sm:text-3xl font-serif font-bold text-warm-text">Meeting &amp; Organization Details</h1>
+        <p class="mt-1 text-sm text-warm-muted">Enter the organization information and basic logistics for this board meeting, or load a saved template from the top bar.</p>
+      </div>
+
+      <div class="bg-warm-card rounded-2xl border border-warm-border p-6 sm:p-8 shadow-sm space-y-6">
+        <!-- Organization Section -->
+        <div class="space-y-4">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-warm-muted flex items-center gap-2">
+            <i data-lucide="building-2" class="w-4 h-4 text-amber-800"></i>
+            <span>Organization Information</span>
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="org-name" class="block text-xs font-medium text-warm-muted mb-1">Organization / Company Name</label>
+              <input id="org-name" type="text" placeholder="e.g., Nordic Horizon AB"
+                oninput="updateMeta('orgName', this.value)"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            </div>
+            <div>
+              <label for="org-number" class="block text-xs font-medium text-warm-muted mb-1">Registration / Org. Number</label>
+              <input id="org-number" type="text" placeholder="e.g., 556912-4821"
+                oninput="updateMeta('orgNumber', this.value)"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-warm-border" />
+
+        <!-- Meeting Logistics Section -->
+        <div class="space-y-4">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-warm-muted flex items-center gap-2">
+            <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-800"></i>
+            <span>Meeting Schedule &amp; Location</span>
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label for="meeting-number" class="block text-xs font-medium text-warm-muted mb-1">Meeting / Minutes No.</label>
+              <input id="meeting-number" type="text" placeholder="e.g., No. 4 / 2026"
+                oninput="updateMeta('meetingNumber', this.value)"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            </div>
+            <div>
+              <label for="meeting-date" class="block text-xs font-medium text-warm-muted mb-1">Meeting Date</label>
+              <input id="meeting-date" type="date"
+                oninput="updateMeta('meetingDate', this.value)"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            </div>
+            <div>
+              <label for="start-time" class="block text-xs font-medium text-warm-muted mb-1">Start Time</label>
+              <input id="start-time" type="time"
+                oninput="updateMeta('startTime', this.value)"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            </div>
+            <div class="sm:col-span-3">
+              <label for="meeting-location" class="block text-xs font-medium text-warm-muted mb-1">Location / Video Conference Link</label>
+              <input id="meeting-location" type="text" placeholder="e.g., Conference Room A / Microsoft Teams"
+                oninput="updateMeta('location', this.value)"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step Footer -->
+        <div class="pt-4 border-t border-warm-border flex items-center justify-between">
+          <button onclick="openTemplatesPage()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FAF8F4] hover:bg-warm-surface border border-warm-border text-xs sm:text-sm font-medium text-warm-text transition">
+            <i data-lucide="layout-template" class="w-4 h-4 text-amber-800"></i>
+            <span>Load a Saved Template</span>
+          </button>
+          <button onclick="goToStep(2)" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold shadow-xs transition">
+            <span>Next: Attendees &amp; Roles</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: ATTENDEES & ROLES -->
+    <section id="step-2" class="step-panel hidden max-w-3xl mx-auto space-y-6">
+      <div>
+        <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Step 2 of 5</span>
+        <h1 class="mt-1 text-2xl sm:text-3xl font-serif font-bold text-warm-text">Attendees &amp; Board Roles</h1>
+        <p class="mt-1 text-sm text-warm-muted">Register who is attending or absent. Partial attendance per agenda item is logged at the end of the meeting in Step 5.</p>
+      </div>
+
+      <!-- Role Assignment Validation Strip -->
+      <div id="role-status-strip" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+
+      <div class="bg-warm-card rounded-2xl border border-warm-border p-6 sm:p-8 shadow-sm space-y-6">
+        <!-- Add Participant Bar -->
+        <div class="space-y-2">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-warm-muted">Add Participant</label>
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <input id="new-person-name" type="text" placeholder="Full Name (e.g., Helena Lindqvist)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addPerson();}"
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            <select id="new-person-role"
+              class="px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30">
+              <option value="Chairperson">Chairperson</option>
+              <option value="Secretary">Secretary</option>
+              <option value="Attester">Attester</option>
+              <option value="Chairperson & Attester">Chairperson &amp; Attester</option>
+              <option value="Board Member" selected>Board Member</option>
+              <option value="Deputy">Deputy</option>
+              <option value="Co-opted / Guest">Co-opted / Guest</option>
+              <option value="Absent">Absent</option>
+            </select>
+            <button onclick="addPerson()" class="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold shrink-0 transition">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Participants List -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-warm-muted">Registered Roster</span>
+            <span id="attendees-count-badge" class="text-xs font-medium text-warm-subtle">0 people</span>
+          </div>
+          <div id="attendees-list" class="divide-y divide-warm-border"></div>
+        </div>
+
+        <!-- Step Footer -->
+        <div class="pt-4 border-t border-warm-border flex items-center justify-between">
+          <button onclick="goToStep(1)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Back</span>
+          </button>
+          <button onclick="goToStep(3)" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold shadow-xs transition">
+            <span>Next: Agenda Setup</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: AGENDA BUILDER -->
+    <section id="step-3" class="step-panel hidden max-w-3xl mx-auto space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Step 3 of 5</span>
+          <h1 class="mt-1 text-2xl sm:text-3xl font-serif font-bold text-warm-text">Meeting Agenda</h1>
+          <p class="mt-1 text-sm text-warm-muted">Structure and reorder the items (§) to be addressed during the meeting.</p>
+        </div>
+        <button onclick="loadStandardTemplate()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-xs font-semibold text-amber-900 shadow-2xs transition shrink-0">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          <span>Load Standard Formalities</span>
+        </button>
+      </div>
+
+      <div class="bg-warm-card rounded-2xl border border-warm-border p-6 sm:p-8 shadow-sm space-y-6">
+        <!-- Add New Agenda Item -->
+        <div class="space-y-2">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-warm-muted">Add Agenda Item</label>
+          <div class="flex gap-2.5">
+            <input id="new-agenda-title" type="text" placeholder="e.g., Approval of Annual Budget"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addAgendaItemFromSetup();}"
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            <button onclick="addAgendaItemFromSetup()" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold shrink-0 transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Add Item</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Agenda List -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-warm-muted">Agenda Items (Drag or use arrows to reorder)</span>
+            <span id="agenda-count-badge" class="text-xs font-medium text-warm-subtle">0 items</span>
+          </div>
+          <div id="setup-agenda-list" class="space-y-2"></div>
+        </div>
+
+        <!-- Step Footer -->
+        <div class="pt-4 border-t border-warm-border flex items-center justify-between">
+          <button onclick="goToStep(2)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Back</span>
+          </button>
+          <button onclick="goToStep(4)" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold shadow-xs transition">
+            <span>Start Taking Minutes</span>
+            <i data-lucide="pen-tool" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 4: MINUTE TAKING -->
+    <section id="step-4" class="step-panel hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Step 4 of 5</span>
+          <h1 class="mt-1 text-2xl sm:text-3xl font-serif font-bold text-warm-text">Record Meeting Minutes</h1>
+          <p class="mt-1 text-sm text-warm-muted">Select any agenda item on the left to record discussions, formal board resolutions, and attachments.</p>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <span id="minutes-progress-pill" class="px-3 py-1.5 rounded-xl bg-warm-card border border-warm-border text-xs font-semibold text-warm-muted">0 / 0 recorded</span>
+          <button onclick="goToStep(5)" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-800 hover:bg-amber-900 text-white text-xs sm:text-sm font-semibold shadow-xs transition">
+            <span>Finalize &amp; Preview</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Left Sidebar: Agenda Stepper -->
+        <aside class="lg:col-span-4 bg-warm-card rounded-2xl border border-warm-border p-4 shadow-sm space-y-3">
+          <div class="flex items-center justify-between px-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-warm-muted">Agenda Navigation</span>
+            <button onclick="insertNewAgendaItemAfterActive()" class="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 hover:text-amber-950">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+              <span>Insert Item</span>
+            </button>
+          </div>
+          <div id="minutes-sidebar-list" class="space-y-1 max-h-[60vh] overflow-y-auto pr-1"></div>
+        </aside>
+
+        <!-- Right Panel: Active Item Editor -->
+        <div id="active-item-editor" class="lg:col-span-8 bg-warm-card rounded-2xl border border-warm-border p-6 sm:p-8 shadow-sm space-y-6"></div>
+      </div>
+    </section>
+
+    <!-- STEP 5: FINALIZE ATTENDANCE, REVIEW & SAVE TO REGISTER -->
+    <section id="step-5" class="step-panel hidden space-y-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Step 5 of 5</span>
+          <h1 class="mt-1 text-2xl sm:text-3xl font-serif font-bold text-warm-text">Final Attendance &amp; Save to Register</h1>
+          <p class="mt-1 text-sm text-warm-muted">Confirm when the meeting ended and specify partial attendance. Save the meeting to your Register to archive and download the official PDF.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="goToStep(4)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Back to Editor</span>
+          </button>
+          <button onclick="openSaveTemplateFromCurrent()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
+            <i data-lucide="bookmark-plus" class="w-4 h-4 text-amber-800"></i>
+            <span>Save as Template</span>
+          </button>
+          <button id="step5-dl-btn" onclick="downloadCurrentWorkspacePDF()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold shadow-sm transition">
+            <i data-lucide="download" class="w-4 h-4 text-amber-400"></i>
+            <span>Download PDF Now</span>
+          </button>
+          <button id="save-register-btn" onclick="saveCurrentMeetingToRegister()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-800 hover:bg-amber-900 text-white text-sm font-semibold shadow-sm transition">
+            <i data-lucide="archive-restore" class="w-4 h-4"></i>
+            <span>Save to Meetings Register</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Final Attendance & Adjournment Panel -->
+      <div class="bg-warm-card rounded-2xl border border-warm-border p-6 sm:p-7 shadow-sm space-y-6 no-print">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-warm-border">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-amber-900/10 text-amber-900 flex items-center justify-center">
+              <i data-lucide="user-check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h2 class="text-base font-semibold text-warm-text">Closing Time &amp; Partial Attendance Log</h2>
+              <p class="text-xs text-warm-muted">Did anyone join late or leave early? Check "Partial attendance" to toggle which § items they attended.</p>
+            </div>
+          </div>
+
+          <!-- Adjournment Input -->
+          <div class="flex items-center gap-3 bg-[#FAF8F4] px-4 py-2 rounded-xl border border-warm-border">
+            <label for="final-end-time" class="text-xs font-semibold uppercase tracking-wider text-warm-muted whitespace-nowrap">Meeting Adjourned:</label>
+            <input id="final-end-time" type="time" oninput="updateMeta('endTime', this.value); renderA4Pages();"
+              class="px-2.5 py-1 rounded-lg bg-white border border-warm-border text-sm font-medium text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+          </div>
+        </div>
+
+        <!-- Present Attendees Partial List -->
+        <div id="final-attendance-list" class="space-y-3"></div>
+      </div>
+
+      <!-- Live A4 Document Preview -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between max-w-[794px] mx-auto px-1 no-print">
+          <span class="text-xs font-semibold uppercase tracking-wider text-warm-muted flex items-center gap-1.5">
+            <i data-lucide="file-check-2" class="w-4 h-4 text-amber-800"></i>
+            <span>Formal A4 Document Preview</span>
+          </span>
+          <span id="page-count-indicator" class="text-xs font-medium text-warm-subtle">1 Page</span>
+        </div>
+
+        <div id="a4-preview-wrapper" class="overflow-x-auto pb-8">
+          <div id="a4-pages-container"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEMPLATES MANAGER FULL PAGE -->
+    <section id="page-templates" class="hidden max-w-4xl mx-auto space-y-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-900/10 text-amber-900 flex items-center justify-center shrink-0">
+            <i data-lucide="layout-template" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-serif font-bold text-warm-text">Meeting Templates</h1>
+            <p class="mt-1 text-sm text-warm-muted">Load, edit, download, or create reusable board meeting templates.</p>
+          </div>
+        </div>
+        <button onclick="goToHome()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Back to Workspace</span>
+        </button>
+      </div>
+
+      <div class="bg-warm-card rounded-2xl border border-warm-border p-6 shadow-sm space-y-6">
+        <!-- Save Workspace as Template -->
+        <div class="p-4 rounded-xl bg-[#FAF8F4] border border-warm-border space-y-3">
+          <div class="text-xs font-semibold uppercase tracking-wider text-warm-muted">Save Current Workspace as New Template</div>
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <input id="new-template-name" type="text" placeholder="Template Name (e.g., Standard Board Meeting — BRF)"
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            <button id="save-tpl-btn" onclick="saveWorkspaceAsTemplate()" class="px-5 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold inline-flex items-center justify-center gap-1.5 shrink-0 transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Save as Template</span>
+            </button>
+          </div>
+          <div id="editing-template-banner" class="hidden items-center justify-between gap-2 pt-2 border-t border-warm-border text-xs text-amber-900">
+            <span id="editing-template-label" class="font-medium">Currently editing template</span>
+            <button onclick="updateCurrentlyEditedTemplate()" class="px-3 py-1.5 rounded-lg bg-amber-800 hover:bg-amber-900 text-white font-semibold transition shadow-sm">
+              Overwrite Template with Current Workspace
+            </button>
+          </div>
+        </div>
+
+        <!-- Templates List -->
+        <div class="space-y-3" id="templates-list-container"></div>
+      </div>
+    </section>
+
+    <!-- MEETINGS REGISTER FULL PAGE -->
+    <section id="page-register" class="hidden max-w-5xl mx-auto space-y-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-900/10 text-amber-900 flex items-center justify-center shrink-0">
+            <i data-lucide="archive" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-serif font-bold text-warm-text">Saved Meetings Register</h1>
+            <p class="mt-1 text-sm text-warm-muted">Download official PDFs, reopen past minutes for editing, or manage archived records.</p>
+          </div>
+        </div>
+        <button onclick="goToHome()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Back to Workspace</span>
+        </button>
+      </div>
+
+      <div class="bg-warm-card rounded-2xl border border-warm-border p-6 shadow-sm space-y-4" id="register-list-container"></div>
+    </section>
+
+  </main>
+
+  <!-- PERSISTENT FOOTER -->
+  <footer class="border-t border-warm-border bg-[#FAF8F3] py-4 px-4 sm:px-6 lg:px-8 mt-auto no-print">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-warm-subtle">
+      <span>Meeting Minutes Pro — Formal Governance &amp; Protocol Suite</span>
+      <span class="font-medium text-warm-muted">By Alfred Stengard</span>
+    </div>
+  </footer>
+
+  <!-- MEASURING SANDBOX FOR ACCURATE A4 PAGINATION -->
+  <div id="measure-sandbox" class="fixed -left-[9999px] top-0 w-[666px] pointer-events-none opacity-0" aria-hidden="true"></div>
+
+  <!-- RESET CONFIRMATION MODAL -->
+  <div id="reset-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/40 backdrop-blur-xs p-4 no-print">
+    <div class="bg-warm-card border border-warm-border rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center shrink-0">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-warm-text">Reset All Meeting Data?</h3>
+          <p class="text-xs text-warm-muted mt-0.5">This will clear the current minutes and load a clean blank template.</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button onclick="closeResetModal()" class="px-4 py-2 rounded-xl border border-warm-border bg-warm-card hover:bg-warm-surface text-xs font-semibold text-warm-text">
+          Cancel
+        </button>
+        <button onclick="confirmResetData()" class="px-4 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-xs font-semibold text-white">
+          Yes, Reset Minutes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    const STORAGE_KEY = 'board_minutes_pro_v3_workspace_alfred_stengard';
+    const TEMPLATES_KEY = 'board_minutes_pro_v3_templates_alfred_stengard';
+    const REGISTER_KEY = 'board_minutes_pro_v3_register_alfred_stengard';
+
+    let currentStep = 1;
+    let activeAgendaIndex = 0;
+    let draggedAgendaIdx = null;
+    let activeTemplateId = null;
+    let activeRegisterId = null;
+
+    function getBlankState() {
+      return {
+        meta: {
+          orgName: '',
+          orgNumber: '',
+          meetingNumber: '',
+          meetingDate: new Date().toISOString().slice(0, 10),
+          startTime: '',
+          endTime: '',
+          location: ''
+        },
+        attendees: [],
+        agenda: [
+          { id: 'b1', title: 'Opening of the Meeting', discussion: '', decision: '', attachments: '' },
+          { id: 'b2', title: 'Election of Chairperson, Secretary, and Attester', discussion: '', decision: '', attachments: '' },
+          { id: 'b3', title: 'Approval of the Agenda', discussion: '', decision: '', attachments: '' },
+          { id: 'b4', title: 'Closing of the Meeting', discussion: '', decision: '', attachments: '' }
+        ]
+      };
+    }
+
+    function getSampleState() {
+      return {
+        meta: {
+          orgName: 'Nordic Horizon AB',
+          orgNumber: '556912-4821',
+          meetingNumber: 'No. 4 / 2026',
+          meetingDate: '2026-11-10',
+          startTime: '14:00',
+          endTime: '16:15',
+          location: 'Strandvägen 7A, Stockholm & Microsoft Teams'
+        },
+        attendees: [
+          { id: 'p1', name: 'Helena Lindqvist', role: 'Chairperson', partial: false, excludedItems: [], note: '' },
+          { id: 'p2', name: 'Marcus Bergström', role: 'Secretary', partial: false, excludedItems: [], note: '' },
+          { id: 'p3', name: 'Sofia Ekholm', role: 'Attester', partial: false, excludedItems: [], note: '' },
+          { id: 'p4', name: 'Johan Wallin', role: 'Board Member', partial: false, excludedItems: [], note: '' },
+          { id: 'p5', name: 'Kalle Karlsson', role: 'Board Member', partial: true, excludedItems: [0, 1, 2], note: 'Joined during § 4' },
+          { id: 'p6', name: 'Eva Söderberg', role: 'Deputy', partial: false, excludedItems: [], note: '' },
+          { id: 'p7', name: 'Anders Nyman (CFO)', role: 'Co-opted / Guest', partial: true, excludedItems: [0, 1, 2, 3, 6, 7], note: 'Present solely for § 5 – § 6' },
+          { id: 'p8', name: 'Fredrik Holm', role: 'Absent', partial: false, excludedItems: [], note: '' }
+        ],
+        agenda: [
+          {
+            id: 'a1',
+            title: 'Opening of the Meeting',
+            discussion: 'The Chairperson of the Board, Helena Lindqvist, declared the meeting open and welcomed all present board members.',
+            decision: '',
+            attachments: ''
+          },
+          {
+            id: 'a2',
+            title: 'Election of Chairperson, Secretary, and Attester',
+            discussion: 'The Board addressed the election of officials for today’s meeting.',
+            decision: 'The Board resolved to elect Helena Lindqvist as Chairperson of the meeting, Marcus Bergström as Secretary, and Sofia Ekholm to attest the minutes together with the Chairperson.',
+            attachments: ''
+          },
+          {
+            id: 'a3',
+            title: 'Approval of the Agenda',
+            discussion: 'The proposed draft agenda distributed prior to the meeting was presented.',
+            decision: 'The Board resolved to approve the proposed agenda without amendments.',
+            attachments: ''
+          },
+          {
+            id: 'a4',
+            title: 'Verification of Quorum and Attendance',
+            discussion: 'It was noted that notice of the meeting had been duly issued in accordance with the Articles of Association. Kalle Karlsson joined the meeting during this item.',
+            decision: 'The Board resolved that the meeting was duly convened and constituted a quorum.',
+            attachments: ''
+          },
+          {
+            id: 'a5',
+            title: 'CEO & Financial Report (Q3)',
+            discussion: 'CFO Anders Nyman presented the third-quarter financial results, liquidity forecast, and key operational metrics. Operating margins improved by 2.4 percentage points compared to Q2.',
+            decision: 'The Board resolved to note the financial report to the record.',
+            attachments: 'Appendix 1: Q3 Financial Report & Cash Flow Statement'
+          },
+          {
+            id: 'a6',
+            title: 'Approval of 2027 Annual Operating Budget',
+            discussion: 'The proposed operating and capital expenditure budget for fiscal year 2027 was reviewed and discussed in detail.',
+            decision: 'The Board resolved to adopt the 2027 Operating Budget in accordance with Appendix 2.',
+            attachments: 'Appendix 2: Proposed 2027 Budget Package'
+          },
+          {
+            id: 'a7',
+            title: 'Other Business',
+            discussion: 'No additional items were raised under other business.',
+            decision: '',
+            attachments: ''
+          },
+          {
+            id: 'a8',
+            title: 'Closing of the Meeting',
+            discussion: 'The Chairperson thanked all participants and declared the board meeting closed.',
+            decision: '',
+            attachments: ''
+          }
+        ]
+      };
+    }
+
+    let state = loadState();
+    let templates = loadTemplates();
+    let meetingsRegister = loadRegister();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.meta && Array.isArray(parsed.attendees) && Array.isArray(parsed.agenda)) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not read saved state:', e);
+      }
+      return getBlankState();
+    }
+
+    function loadTemplates() {
+      try {
+        const raw = localStorage.getItem(TEMPLATES_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not read templates:', e);
+      }
+      const defaultTemplate = [
+        {
+          id: 'tpl_sample_1',
+          name: 'Example Template: Nordic Horizon AB (Q3 Board Meeting)',
+          updatedAt: '2026-11-10',
+          data: getSampleState()
+        }
+      ];
+      try {
+        localStorage.setItem(TEMPLATES_KEY, JSON.stringify(defaultTemplate));
+      } catch (e) {}
+      return defaultTemplate;
+    }
+
+    function saveTemplates() {
+      try {
+        localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+      } catch (e) {
+        console.warn('Could not save templates:', e);
+      }
+    }
+
+    function loadRegister() {
+      try {
+        const raw = localStorage.getItem(REGISTER_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) {
+        console.warn('Could not read register:', e);
+      }
+      return [];
+    }
+
+    function saveRegister() {
+      try {
+        localStorage.setItem(REGISTER_KEY, JSON.stringify(meetingsRegister));
+        updateRegisterCountPill();
+      } catch (e) {
+        console.warn('Could not save register:', e);
+      }
+    }
+
+    function updateRegisterCountPill() {
+      const pill = document.getElementById('register-count-pill');
+      if (pill) {
+        pill.textContent = meetingsRegister.length;
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        const el = document.getElementById('save-indicator');
+        if (el) {
+          el.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></span><span>Draft saved</span>';
+          clearTimeout(window._saveTimer);
+          window._saveTimer = setTimeout(() => {
+            el.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-600"></span><span>Draft saved</span>';
+          }, 1200);
+        }
+      } catch (e) {
+        console.warn('Could not save state:', e);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // NAVIGATION
+    function updateStepperUI(activeStep) {
+      for (let i = 1; i <= 5; i++) {
+        const tab = document.getElementById(`step-tab-${i}`);
+        if (!tab) continue;
+        const badge = tab.querySelector('.step-badge');
+        if (activeStep === i) {
+          tab.className = 'step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-warm-dark text-[#FCFBF9] shadow-xs transition';
+          if (badge) badge.className = 'step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-amber-500 text-stone-950';
+        } else if (activeStep > 0 && i < activeStep) {
+          tab.className = 'step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-warm-text hover:bg-warm-surface transition';
+          if (badge) badge.className = 'step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold bg-amber-900/15 text-amber-900';
+        } else {
+          tab.className = 'step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-warm-muted hover:text-warm-text hover:bg-warm-surface/60 transition';
+          if (badge) badge.className = 'step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold bg-warm-surface text-warm-muted';
+        }
+      }
+    }
+
+    function goToHome() {
+      goToStep(1);
+    }
+
+    function goToStep(stepNumber) {
+      currentStep = stepNumber;
+
+      const tplPage = document.getElementById('page-templates');
+      const regPage = document.getElementById('page-register');
+      if (tplPage) tplPage.classList.add('hidden');
+      if (regPage) regPage.classList.add('hidden');
+
+      updateStepperUI(stepNumber);
+
+      for (let i = 1; i <= 5; i++) {
+        const panel = document.getElementById(`step-${i}`);
+        if (panel) {
+          panel.classList.toggle('hidden', i !== stepNumber);
+        }
+      }
+
+      if (stepNumber === 1) syncStep1Inputs();
+      if (stepNumber === 2) renderStep2();
+      if (stepNumber === 3) renderStep3();
+      if (stepNumber === 4) renderStep4();
+      if (stepNumber === 5) renderStep5();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    function openTemplatesPage() {
+      for (let i = 1; i <= 5; i++) {
+        const p = document.getElementById(`step-${i}`);
+        if (p) p.classList.add('hidden');
+      }
+      document.getElementById('page-register').classList.add('hidden');
+      document.getElementById('page-templates').classList.remove('hidden');
+      updateStepperUI(0);
+      renderTemplatesList();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    function openRegisterPage() {
+      for (let i = 1; i <= 5; i++) {
+        const p = document.getElementById(`step-${i}`);
+        if (p) p.classList.add('hidden');
+      }
+      document.getElementById('page-templates').classList.add('hidden');
+      document.getElementById('page-register').classList.remove('hidden');
+      updateStepperUI(0);
+      renderRegisterList();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    // STEP 1
+    function syncStep1Inputs() {
+      document.getElementById('org-name').value = state.meta.orgName || '';
+      document.getElementById('org-number').value = state.meta.orgNumber || '';
+      document.getElementById('meeting-number').value = state.meta.meetingNumber || '';
+      document.getElementById('meeting-date').value = state.meta.meetingDate || '';
+      document.getElementById('start-time').value = state.meta.startTime || '';
+      document.getElementById('meeting-location').value = state.meta.location || '';
+    }
+
+    function updateMeta(key, value) {
+      state.meta[key] = value;
+      saveState();
+    }
+
+    // STEP 2
+    function renderStep2() {
+      const strip = document.getElementById('role-status-strip');
+      const chair = state.attendees.filter(a => a.role === 'Chairperson' || a.role === 'Chairperson & Attester');
+      const sec = state.attendees.filter(a => a.role === 'Secretary');
+      const att = state.attendees.filter(a => a.role === 'Attester' || a.role === 'Chairperson & Attester');
+
+      const roleCard = (label, list) => {
+        const ok = list.length > 0;
+        return `
+          <div class="px-4 py-3 rounded-xl border ${ok ? 'bg-warm-card border-warm-border' : 'bg-amber-50/70 border-amber-300'} flex items-center justify-between gap-2">
+            <div>
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-warm-muted">${label}</div>
+              <div class="text-xs font-medium text-warm-text mt-0.5 truncate">
+                ${ok ? list.map(p => escapeHtml(p.name)).join(', ') : 'Not assigned yet'}
+              </div>
+            </div>
+            <span class="w-6 h-6 rounded-full flex items-center justify-center ${ok ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-200/70 text-amber-900'}">
+              <i data-lucide="${ok ? 'check' : 'alert-circle'}" class="w-3.5 h-3.5"></i>
+            </span>
+          </div>
+        `;
+      };
+
+      strip.innerHTML =
+        roleCard('Chairperson', chair) +
+        roleCard('Secretary', sec) +
+        roleCard('Attester(s)', att);
+
+      document.getElementById('attendees-count-badge').textContent = `${state.attendees.length} ${state.attendees.length === 1 ? 'person' : 'people'}`;
+
+      const listEl = document.getElementById('attendees-list');
+      if (state.attendees.length === 0) {
+        listEl.innerHTML = `
+          <div class="py-8 text-center text-sm text-warm-muted">
+            No participants added yet. Use the form above to add board members and officials.
+          </div>
+        `;
+      } else {
+        const roles = [
+          'Chairperson',
+          'Secretary',
+          'Attester',
+          'Chairperson & Attester',
+          'Board Member',
+          'Deputy',
+          'Co-opted / Guest',
+          'Absent'
+        ];
+
+        listEl.innerHTML = state.attendees.map((person, idx) => `
+          <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3 flex-1">
+              <div class="w-8 h-8 rounded-full bg-warm-surface border border-warm-border flex items-center justify-center text-xs font-bold text-warm-text shrink-0">
+                ${escapeHtml(person.name.trim().charAt(0).toUpperCase() || '?')}
+              </div>
+              <input type="text" value="${escapeHtml(person.name)}"
+                oninput="updatePersonName(${idx}, this.value)"
+                class="flex-1 px-3 py-1.5 rounded-lg bg-transparent hover:bg-[#FAF8F4] focus:bg-[#FAF8F4] border border-transparent focus:border-warm-border text-sm font-medium text-warm-text focus:outline-none transition" />
+            </div>
+            <div class="flex items-center gap-2">
+              <select onchange="updatePersonRole(${idx}, this.value)"
+                class="px-3 py-1.5 rounded-lg bg-[#FAF8F4] border border-warm-border text-xs font-medium text-warm-text focus:outline-none">
+                ${roles.map(r => `<option value="${r}" ${person.role === r ? 'selected' : ''}>${r}</option>`).join('')}
+              </select>
+              <button onclick="removePerson(${idx})" title="Remove person"
+                class="p-1.5 rounded-lg text-stone-400 hover:text-rose-700 hover:bg-rose-50 transition">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+      lucide.createIcons();
+    }
+
+    function addPerson() {
+      const nameInput = document.getElementById('new-person-name');
+      const roleSelect = document.getElementById('new-person-role');
+      const name = nameInput.value.trim();
+      if (!name) return;
+
+      state.attendees.push({
+        id: 'p_' + Date.now(),
+        name,
+        role: roleSelect.value,
+        partial: false,
+        excludedItems: [],
+        note: ''
+      });
+
+      nameInput.value = '';
+      saveState();
+      renderStep2();
+    }
+
+    function updatePersonName(idx, val) {
+      if (state.attendees[idx]) {
+        state.attendees[idx].name = val;
+        saveState();
+      }
+    }
+
+    function updatePersonRole(idx, val) {
+      if (state.attendees[idx]) {
+        state.attendees[idx].role = val;
+        if (val === 'Absent') {
+          state.attendees[idx].partial = false;
+          state.attendees[idx].excludedItems = [];
+          state.attendees[idx].note = '';
+        }
+        saveState();
+        renderStep2();
+      }
+    }
+
+    function removePerson(idx) {
+      state.attendees.splice(idx, 1);
+      saveState();
+      renderStep2();
+    }
+
+    // STEP 3
+    function renderStep3() {
+      document.getElementById('agenda-count-badge').textContent = `${state.agenda.length} ${state.agenda.length === 1 ? 'item' : 'items'}`;
+      const list = document.getElementById('setup-agenda-list');
+
+      if (state.agenda.length === 0) {
+        list.innerHTML = `
+          <div class="py-8 text-center text-sm text-warm-muted">
+            Your agenda is empty. Add an item above or load the standard formalities template.
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = state.agenda.map((item, idx) => `
+        <div draggable="true"
+          ondragstart="onAgendaDragStart(event, ${idx})"
+          ondragover="onAgendaDragOver(event)"
+          ondrop="onAgendaDrop(event, ${idx})"
+          class="group flex items-center gap-3 p-3 rounded-xl bg-[#FAF8F4] border border-warm-border hover:border-warm-borderStrong transition">
+          <div class="cursor-grab text-stone-400 hover:text-warm-text px-1" title="Drag to reorder">
+            <i data-lucide="grip-vertical" class="w-4 h-4"></i>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-warm-surface text-xs font-serif font-bold text-amber-950 shrink-0 whitespace-nowrap">
+            § ${idx + 1}
+          </span>
+          <input type="text" value="${escapeHtml(item.title)}"
+            oninput="updateAgendaTitle(${idx}, this.value)"
+            class="flex-1 bg-transparent px-2 py-1 rounded-lg text-sm font-medium text-warm-text focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-800/40" />
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick="moveAgendaItem(${idx}, -1)" ${idx === 0 ? 'disabled' : ''}
+              class="p-1.5 rounded-lg text-stone-500 hover:bg-warm-surface disabled:opacity-30" title="Move up">
+              <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="moveAgendaItem(${idx}, 1)" ${idx === state.agenda.length - 1 ? 'disabled' : ''}
+              class="p-1.5 rounded-lg text-stone-500 hover:bg-warm-surface disabled:opacity-30" title="Move down">
+              <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteAgendaItem(${idx})"
+              class="p-1.5 rounded-lg text-stone-400 hover:text-rose-700 hover:bg-rose-50" title="Remove item">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function addAgendaItemFromSetup() {
+      const input = document.getElementById('new-agenda-title');
+      const title = input.value.trim();
+      if (!title) return;
+      state.agenda.push({
+        id: 'a_' + Date.now(),
+        title,
+        discussion: '',
+        decision: '',
+        attachments: ''
+      });
+      input.value = '';
+      saveState();
+      renderStep3();
+    }
+
+    function updateAgendaTitle(idx, val) {
+      if (state.agenda[idx]) {
+        state.agenda[idx].title = val;
+        saveState();
+      }
+    }
+
+    function moveAgendaItem(idx, dir) {
+      const target = idx + dir;
+      if (target < 0 || target >= state.agenda.length) return;
+      const temp = state.agenda[idx];
+      state.agenda[idx] = state.agenda[target];
+      state.agenda[target] = temp;
+      if (activeAgendaIndex === idx) activeAgendaIndex = target;
+      saveState();
+      if (currentStep === 3) renderStep3();
+      if (currentStep === 4) renderStep4();
+    }
+
+    function deleteAgendaItem(idx) {
+      if (state.agenda.length <= 1) return;
+      state.agenda.splice(idx, 1);
+      if (activeAgendaIndex >= state.agenda.length) {
+        activeAgendaIndex = Math.max(0, state.agenda.length - 1);
+      }
+      saveState();
+      if (currentStep === 3) renderStep3();
+      if (currentStep === 4) renderStep4();
+    }
+
+    function onAgendaDragStart(e, idx) {
+      draggedAgendaIdx = idx;
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function onAgendaDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function onAgendaDrop(e, targetIdx) {
+      e.preventDefault();
+      if (draggedAgendaIdx === null || draggedAgendaIdx === targetIdx) return;
+      const moved = state.agenda.splice(draggedAgendaIdx, 1)[0];
+      state.agenda.splice(targetIdx, 0, moved);
+      draggedAgendaIdx = null;
+      saveState();
+      renderStep3();
+    }
+
+    function loadStandardTemplate() {
+      state.agenda = [
+        { id: 't1', title: 'Opening of the Meeting', discussion: 'The Chairperson declared the meeting open.', decision: '', attachments: '' },
+        { id: 't2', title: 'Election of Chairperson, Secretary, and Attester', discussion: '', decision: 'The Board resolved to elect the meeting officials as proposed.', attachments: '' },
+        { id: 't3', title: 'Approval of the Agenda', discussion: '', decision: 'The Board resolved to approve the agenda.', attachments: '' },
+        { id: 't4', title: 'Verification of Quorum and Previous Minutes', discussion: 'The previous board minutes were reviewed.', decision: 'The Board resolved that the meeting is duly convened and placed the previous minutes on file.', attachments: '' },
+        { id: 't5', title: 'Financial & Operational Report', discussion: '', decision: 'The Board resolved to note the report to the record.', attachments: '' },
+        { id: 't6', title: 'Matters for Resolution', discussion: '', decision: '', attachments: '' },
+        { id: 't7', title: 'Other Business', discussion: 'No other matters were raised.', decision: '', attachments: '' },
+        { id: 't8', title: 'Closing of the Meeting', discussion: 'The Chairperson thanked all participants and declared the meeting closed.', decision: '', attachments: '' }
+      ];
+      activeAgendaIndex = 0;
+      saveState();
+      renderStep3();
+    }
+
+    // STEP 4
+    function renderStep4() {
+      if (state.agenda.length === 0) {
+        state.agenda.push({ id: 'a_' + Date.now(), title: 'Opening of the Meeting', discussion: '', decision: '', attachments: '' });
+      }
+      if (activeAgendaIndex >= state.agenda.length) activeAgendaIndex = state.agenda.length - 1;
+
+      const completedCount = state.agenda.filter(it => (it.discussion && it.discussion.trim()) || (it.decision && it.decision.trim())).length;
+      document.getElementById('minutes-progress-pill').textContent = `${completedCount} / ${state.agenda.length} recorded`;
+
+      const sidebar = document.getElementById('minutes-sidebar-list');
+      sidebar.innerHTML = state.agenda.map((item, idx) => {
+        const isCurrent = idx === activeAgendaIndex;
+        const hasContent = (item.discussion && item.discussion.trim()) || (item.decision && item.decision.trim());
+        const hasDecision = item.decision && item.decision.trim();
+        return `
+          <button onclick="selectAgendaItem(${idx})"
+            class="w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-2 transition ${
+              isCurrent
+                ? 'bg-warm-dark text-[#FCFBF9] shadow-xs'
+                : 'hover:bg-warm-surface text-warm-text'
+            }">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="whitespace-nowrap shrink-0 text-xs font-serif font-bold px-2 py-0.5 rounded-md ${
+                isCurrent ? 'bg-amber-500 text-stone-950' : 'bg-warm-surface text-warm-muted'
+              }">§ ${idx + 1}</span>
+              <span class="text-xs sm:text-sm font-medium truncate">${escapeHtml(item.title || 'Untitled Item')}</span>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              ${hasDecision ? `<span class="w-2 h-2 rounded-full bg-amber-500" title="Resolution recorded"></span>` : ''}
+              ${hasContent ? `<i data-lucide="check-circle-2" class="w-3.5 h-3.5 ${isCurrent ? 'text-emerald-300' : 'text-emerald-700'}"></i>` : ''}
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      const item = state.agenda[activeAgendaIndex];
+      const isLast = activeAgendaIndex === state.agenda.length - 1;
+      const editor = document.getElementById('active-item-editor');
+
+      editor.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-warm-border">
+          <div class="flex items-center gap-2.5 flex-1 min-w-[240px]">
+            <span class="px-3 py-1.5 rounded-xl bg-amber-900/10 text-amber-950 font-serif font-bold text-sm shrink-0 whitespace-nowrap">
+              § ${activeAgendaIndex + 1}
+            </span>
+            <input type="text" value="${escapeHtml(item.title)}"
+              placeholder="Agenda item heading..."
+              oninput="updateActiveItemField('title', this.value)"
+              class="w-full px-3 py-1.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-base font-serif font-bold text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button onclick="moveAgendaItem(${activeAgendaIndex}, -1)" ${activeAgendaIndex === 0 ? 'disabled' : ''}
+              class="p-2 rounded-lg border border-warm-border text-warm-muted hover:bg-warm-surface disabled:opacity-30" title="Move item up">
+              <i data-lucide="arrow-up" class="w-4 h-4"></i>
+            </button>
+            <button onclick="moveAgendaItem(${activeAgendaIndex}, 1)" ${isLast ? 'disabled' : ''}
+              class="p-2 rounded-lg border border-warm-border text-warm-muted hover:bg-warm-surface disabled:opacity-30" title="Move item down">
+              <i data-lucide="arrow-down" class="w-4 h-4"></i>
+            </button>
+            <button onclick="deleteAgendaItem(${activeAgendaIndex})" ${state.agenda.length <= 1 ? 'disabled' : ''}
+              class="p-2 rounded-lg border border-warm-border text-rose-700 hover:bg-rose-50 disabled:opacity-30" title="Delete this item">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Discussion / Background -->
+        <div class="space-y-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wider text-warm-muted">1. Background &amp; Discussion</label>
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="appendQuickPhrase('discussion', 'The matter was presented and discussed by the Board.')"
+                class="text-[11px] px-2.5 py-1 rounded-lg bg-warm-surface hover:bg-warm-border text-warm-text transition">
+                + "Presented &amp; discussed"
+              </button>
+              <button onclick="appendQuickPhrase('discussion', 'The report was reviewed and questions were answered.')"
+                class="text-[11px] px-2.5 py-1 rounded-lg bg-warm-surface hover:bg-warm-border text-warm-text transition">
+                + "Report reviewed"
+              </button>
+            </div>
+          </div>
+          <textarea id="active-discussion" rows="4"
+            placeholder="Summarize what was presented or discussed under this item..."
+            oninput="updateActiveItemField('discussion', this.value)"
+            class="w-full p-4 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text leading-relaxed focus:outline-none focus:ring-2 focus:ring-amber-700/30">${escapeHtml(item.discussion)}</textarea>
+        </div>
+
+        <!-- Formal Decision / Resolution -->
+        <div class="space-y-2 bg-amber-50/50 p-4 sm:p-5 rounded-2xl border border-amber-800/20">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label class="text-xs font-bold uppercase tracking-wider text-amber-950 flex items-center gap-1.5">
+              <i data-lucide="gavel" class="w-4 h-4 text-amber-800"></i>
+              <span>2. Formal Board Resolution / Decision</span>
+            </label>
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="appendQuickPhrase('decision', 'The Board resolved to approve the proposal in accordance with the presented documentation.')"
+                class="text-[11px] px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100/70 border border-amber-800/20 text-amber-950 font-medium transition">
+                + "The Board resolved to approve..."
+              </button>
+              <button onclick="appendQuickPhrase('decision', 'The Board resolved to note the information to the record.')"
+                class="text-[11px] px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100/70 border border-amber-800/20 text-amber-950 font-medium transition">
+                + "Note to the record"
+              </button>
+            </div>
+          </div>
+          <textarea id="active-decision" rows="3"
+            placeholder="Leave blank if no formal decision was made, or enter 'The Board resolved to...'"
+            oninput="updateActiveItemField('decision', this.value)"
+            class="w-full p-3.5 rounded-xl bg-white border border-amber-800/25 text-sm font-medium text-warm-text leading-relaxed focus:outline-none focus:ring-2 focus:ring-amber-700/30">${escapeHtml(item.decision)}</textarea>
+        </div>
+
+        <!-- Appendices / Reference -->
+        <div class="space-y-2">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-warm-muted">3. Appendices / Attachments (Optional)</label>
+          <input id="active-attachments" type="text" value="${escapeHtml(item.attachments)}"
+            placeholder="e.g., Appendix 1: Monthly Financial Report"
+            oninput="updateActiveItemField('attachments', this.value)"
+            class="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+        </div>
+
+        ${isLast ? `
+          <div class="p-4 rounded-xl bg-warm-surface/70 border border-warm-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-wider text-warm-text">Final Agenda Item — Adjournment Time</div>
+              <div class="text-xs text-warm-muted">Record the time the meeting concluded (can also be adjusted in Step 5).</div>
+            </div>
+            <input type="time" value="${escapeHtml(state.meta.endTime || '')}"
+              oninput="updateMeta('endTime', this.value)"
+              class="px-3.5 py-2 rounded-xl bg-white border border-warm-border text-sm font-semibold text-warm-text" />
+          </div>
+        ` : ''}
+
+        <!-- Bottom Controls -->
+        <div class="flex items-center justify-between pt-4 border-t border-warm-border">
+          <button onclick="selectAgendaItem(${activeAgendaIndex - 1})" ${activeAgendaIndex === 0 ? 'disabled' : ''}
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-warm-border bg-warm-card hover:bg-warm-surface text-xs sm:text-sm font-medium text-warm-text disabled:opacity-40 transition">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            <span>Previous Item</span>
+          </button>
+
+          ${!isLast ? `
+            <button onclick="selectAgendaItem(${activeAgendaIndex + 1})"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-xs sm:text-sm font-medium transition">
+              <span>Next Item (§ ${activeAgendaIndex + 2})</span>
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          ` : `
+            <button onclick="goToStep(5)"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-800 hover:bg-amber-900 text-white text-xs sm:text-sm font-semibold transition">
+              <span>Proceed to Finalize &amp; Save</span>
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </button>
+          `}
+        </div>
+      `;
+
+      lucide.createIcons();
+    }
+
+    function selectAgendaItem(idx) {
+      if (idx < 0 || idx >= state.agenda.length) return;
+      activeAgendaIndex = idx;
+      renderStep4();
+    }
+
+    function updateActiveItemField(field, value) {
+      const item = state.agenda[activeAgendaIndex];
+      if (!item) return;
+      item[field] = value;
+      saveState();
+      if (field === 'title') {
+        const buttons = document.querySelectorAll('#minutes-sidebar-list button');
+        if (buttons[activeAgendaIndex]) {
+          const titleSpan = buttons[activeAgendaIndex].querySelector('span.truncate');
+          if (titleSpan) titleSpan.textContent = value || 'Untitled Item';
+        }
+      }
+    }
+
+    function appendQuickPhrase(field, phrase) {
+      const item = state.agenda[activeAgendaIndex];
+      if (!item) return;
+      const current = (item[field] || '').trim();
+      item[field] = current ? `${current} ${phrase}` : phrase;
+      saveState();
+      renderStep4();
+    }
+
+    function insertNewAgendaItemAfterActive() {
+      const newItem = {
+        id: 'a_' + Date.now(),
+        title: 'New Agenda Item',
+        discussion: '',
+        decision: '',
+        attachments: ''
+      };
+      state.agenda.splice(activeAgendaIndex + 1, 0, newItem);
+      activeAgendaIndex = activeAgendaIndex + 1;
+      saveState();
+      renderStep4();
+    }
+
+    // STEP 5
+    function renderStep5() {
+      document.getElementById('final-end-time').value = state.meta.endTime || '';
+      renderFinalAttendanceControl();
+      renderA4Pages();
+    }
+
+    function renderFinalAttendanceControl() {
+      const container = document.getElementById('final-attendance-list');
+      const presentPeople = state.attendees
+        .map((p, originalIdx) => ({ ...p, originalIdx }))
+        .filter(p => p.role !== 'Absent');
+
+      if (presentPeople.length === 0) {
+        container.innerHTML = `<div class="text-sm text-warm-muted py-2">No present attendees registered.</div>`;
+        return;
+      }
+
+      container.innerHTML = presentPeople.map(p => {
+        const excluded = Array.isArray(p.excludedItems) ? p.excludedItems : [];
+        return `
+          <div class="p-4 rounded-xl bg-[#FAF8F4] border border-warm-border space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="font-semibold text-sm text-warm-text">${escapeHtml(p.name)}</span>
+                <span class="text-xs px-2 py-0.5 rounded-md bg-warm-surface text-warm-muted">${escapeHtml(p.role)}</span>
+              </div>
+              <label class="inline-flex items-center gap-2 text-xs font-medium text-warm-text cursor-pointer select-none">
+                <input type="checkbox" ${p.partial ? 'checked' : ''}
+                  onchange="togglePersonPartial(${p.originalIdx}, this.checked)"
+                  class="w-4 h-4 rounded text-amber-800 focus:ring-amber-700 border-warm-borderStrong" />
+                <span>Did not attend entire meeting (Partial attendance)</span>
+              </label>
+            </div>
+
+            ${p.partial ? `
+              <div class="pt-2 border-t border-warm-border/70 space-y-3">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-xs font-medium text-warm-muted mr-1">Click § items to toggle presence (Green = Present, Crossed = Absent):</span>
+                  ${state.agenda.map((ag, agIdx) => {
+                    const isExcluded = excluded.includes(agIdx);
+                    return `
+                      <button type="button" onclick="togglePersonAgendaPresence(${p.originalIdx}, ${agIdx})"
+                        title="§ ${agIdx + 1}: ${escapeHtml(ag.title)}"
+                        class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
+                          isExcluded
+                            ? 'bg-rose-50 border-rose-200 text-rose-800 line-through'
+                            : 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                        }">
+                        § ${agIdx + 1}
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <span class="text-xs font-semibold text-warm-muted shrink-0">Deviation Note on Minutes:</span>
+                  <input type="text" value="${escapeHtml(p.note || '')}"
+                    placeholder="e.g., Joined during § 4 / Left after § 6"
+                    oninput="updatePersonAttendanceNote(${p.originalIdx}, this.value)"
+                    class="flex-1 px-3 py-1.5 rounded-lg bg-white border border-warm-border text-xs text-warm-text focus:outline-none focus:ring-1 focus:ring-amber-700" />
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function computeAttendanceDeviationSummary(excludedItems, totalItems) {
+      if (!excludedItems || excludedItems.length === 0) return 'Attended all items';
+      const attended = [];
+      for (let i = 0; i < totalItems; i++) {
+        if (!excludedItems.includes(i)) attended.push(i + 1);
+      }
+      if (attended.length === 0) return 'Absent for all items';
+      const min = attended[0];
+      const max = attended[attended.length - 1];
+      const isContiguous = attended.length === (max - min + 1);
+      if (isContiguous) {
+        if (min > 1 && max === totalItems) return `Joined at § ${min}`;
+        if (min === 1 && max < totalItems) return `Left after § ${max}`;
+        return `Present during § ${min} – § ${max}`;
+      }
+      return `Present during ${attended.map(n => '§ ' + n).join(', ')}`;
+    }
+
+    function togglePersonPartial(personIdx, checked) {
+      const p = state.attendees[personIdx];
+      if (!p) return;
+      p.partial = checked;
+      if (!checked) {
+        p.excludedItems = [];
+        p.note = '';
+      } else if (!p.note) {
+        p.note = computeAttendanceDeviationSummary(p.excludedItems || [], state.agenda.length);
+      }
+      saveState();
+      renderFinalAttendanceControl();
+      renderA4Pages();
+    }
+
+    function togglePersonAgendaPresence(personIdx, agendaIdx) {
+      const p = state.attendees[personIdx];
+      if (!p) return;
+      if (!Array.isArray(p.excludedItems)) p.excludedItems = [];
+      const pos = p.excludedItems.indexOf(agendaIdx);
+      if (pos >= 0) {
+        p.excludedItems.splice(pos, 1);
+      } else {
+        p.excludedItems.push(agendaIdx);
+        p.excludedItems.sort((a, b) => a - b);
+      }
+      p.note = computeAttendanceDeviationSummary(p.excludedItems, state.agenda.length);
+      saveState();
+      renderFinalAttendanceControl();
+      renderA4Pages();
+    }
+
+    function updatePersonAttendanceNote(personIdx, val) {
+      const p = state.attendees[personIdx];
+      if (!p) return;
+      p.note = val;
+      saveState();
+      renderA4Pages();
+    }
+
+    // A4 DOCUMENT RENDERER & PAGINATION
+    function buildDocumentBlocks(targetState = state) {
+      const blocks = [];
+      const m = targetState.meta;
+
+      const chair = targetState.attendees.filter(a => a.role === 'Chairperson' || a.role === 'Chairperson & Attester').map(a => a.name).join(', ') || '—';
+      const sec = targetState.attendees.filter(a => a.role === 'Secretary').map(a => a.name).join(', ') || '—';
+      const att = targetState.attendees.filter(a => a.role === 'Attester' || a.role === 'Chairperson & Attester').map(a => a.name).join(', ') || '—';
+
+      const presentMembers = targetState.attendees.filter(a => a.role !== 'Absent' && a.role !== 'Co-opted / Guest');
+      const guests = targetState.attendees.filter(a => a.role === 'Co-opted / Guest');
+      const absentMembers = targetState.attendees.filter(a => a.role === 'Absent');
+
+      blocks.push(`
+        <div class="mb-6 pb-5 border-b-2 border-stone-900">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500">Official Board Minutes</div>
+              <h1 class="text-2xl font-serif font-bold text-stone-950 mt-1">${escapeHtml(m.orgName || 'Organization Name')}</h1>
+              <div class="text-xs text-stone-600 mt-0.5">
+                ${m.orgNumber ? `Reg. No: ${escapeHtml(m.orgNumber)}` : ''}
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="inline-block px-3 py-1 border border-stone-800 text-xs font-bold uppercase tracking-wider text-stone-900">
+                Minutes ${escapeHtml(m.meetingNumber || '#1')}
+              </div>
+              <div class="text-xs text-stone-600 mt-1.5">Date: <strong class="text-stone-900">${escapeHtml(m.meetingDate || '—')}</strong></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-x-8 gap-y-1.5 mt-5 pt-4 border-t border-stone-200 text-xs">
+            <div><span class="font-semibold text-stone-500">Time:</span> <span class="text-stone-900">${escapeHtml(m.startTime || '—')}${m.endTime ? ` – ${escapeHtml(m.endTime)}` : ''}</span></div>
+            <div><span class="font-semibold text-stone-500">Chairperson:</span> <span class="text-stone-900">${escapeHtml(chair)}</span></div>
+            <div class="col-span-2"><span class="font-semibold text-stone-500">Location:</span> <span class="text-stone-900">${escapeHtml(m.location || '—')}</span></div>
+            <div><span class="font-semibold text-stone-500">Secretary:</span> <span class="text-stone-900">${escapeHtml(sec)}</span></div>
+            <div><span class="font-semibold text-stone-500">Attester(s):</span> <span class="text-stone-900">${escapeHtml(att)}</span></div>
+          </div>
+        </div>
+      `);
+
+      blocks.push(`
+        <div class="mb-6 pb-4 border-b border-stone-300 text-xs space-y-2">
+          <div class="font-serif font-bold uppercase tracking-wider text-[11px] text-stone-900">Attendance &amp; Voting Roster</div>
+          <div class="grid grid-cols-1 gap-1">
+            <div>
+              <span class="font-semibold text-stone-700">Present Members:</span>
+              <span class="text-stone-900">
+                ${presentMembers.length > 0
+                  ? presentMembers.map(p => `${escapeHtml(p.name)} (${escapeHtml(p.role)}${p.partial && p.note ? ` — <em>${escapeHtml(p.note)}</em>` : ''})`).join('; ')
+                  : 'None recorded'}
+              </span>
+            </div>
+            ${guests.length > 0 ? `
+              <div>
+                <span class="font-semibold text-stone-700">Co-opted / In Attendance:</span>
+                <span class="text-stone-900">
+                  ${guests.map(p => `${escapeHtml(p.name)}${p.partial && p.note ? ` (<em>${escapeHtml(p.note)}</em>)` : ''}`).join('; ')}
+                </span>
+              </div>
+            ` : ''}
+            ${absentMembers.length > 0 ? `
+              <div>
+                <span class="font-semibold text-stone-700">Absent:</span>
+                <span class="text-stone-900">${absentMembers.map(p => escapeHtml(p.name)).join(', ')}</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `);
+
+      targetState.agenda.forEach((item, idx) => {
+        const isLast = idx === targetState.agenda.length - 1;
+        blocks.push(`
+          <div class="mb-5 pb-3 border-b border-stone-200/80 last:border-b-0">
+            <h2 class="text-sm font-serif font-bold text-stone-950 flex items-baseline gap-2">
+              <span class="whitespace-nowrap">§ ${idx + 1}</span>
+              <span>${escapeHtml(item.title || 'Untitled Agenda Item')}</span>
+            </h2>
+            ${item.discussion && item.discussion.trim() ? `
+              <p class="mt-1.5 text-xs text-stone-800 leading-relaxed whitespace-pre-line">${escapeHtml(item.discussion)}</p>
+            ` : ''}
+            ${item.decision && item.decision.trim() ? `
+              <div class="mt-2 pl-3 border-l-2 border-stone-900 bg-stone-50 py-1.5 pr-3 text-xs text-stone-950">
+                <span class="font-bold uppercase tracking-wider text-[10px] text-stone-700 block">Resolution:</span>
+                <span class="font-medium leading-relaxed whitespace-pre-line">${escapeHtml(item.decision)}</span>
+              </div>
+            ` : ''}
+            ${item.attachments && item.attachments.trim() ? `
+              <div class="mt-1.5 text-[11px] italic text-stone-600">
+                Attachment: ${escapeHtml(item.attachments)}
+              </div>
+            ` : ''}
+            ${isLast && m.endTime && !(item.discussion && item.discussion.includes(m.endTime)) ? `
+              <div class="mt-1.5 text-xs font-medium text-stone-800">
+                The meeting was declared adjourned at ${escapeHtml(m.endTime)}.
+              </div>
+            ` : ''}
+          </div>
+        `);
+      });
+
+      const signers = [];
+      targetState.attendees.filter(a => a.role === 'Secretary').forEach(p => signers.push({ name: p.name, label: 'Secretary (Minutes)' }));
+      targetState.attendees.filter(a => a.role === 'Chairperson' || a.role === 'Chairperson & Attester').forEach(p => signers.push({ name: p.name, label: p.role }));
+      targetState.attendees.filter(a => a.role === 'Attester').forEach(p => signers.push({ name: p.name, label: 'Attester' }));
+
+      if (signers.length === 0) {
+        signers.push(
+          { name: '________________________', label: 'Secretary' },
+          { name: '________________________', label: 'Chairperson' },
+          { name: '________________________', label: 'Attester' }
+        );
+      }
+
+      blocks.push(`
+        <div class="mt-8 pt-6 border-t-2 border-stone-900 break-inside-avoid">
+          <div class="text-xs font-serif font-bold uppercase tracking-wider text-stone-900 mb-8">
+            Signatures &amp; Attestation
+          </div>
+          <div class="grid grid-cols-2 gap-x-12 gap-y-8">
+            ${signers.map(s => `
+              <div class="pt-16">
+                <div class="border-t border-stone-800 pt-1.5">
+                  <div class="text-xs font-bold text-stone-950">${escapeHtml(s.name)}</div>
+                  <div class="text-[11px] text-stone-600">${escapeHtml(s.label)}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `);
+
+      return blocks;
+    }
+
+    function generatePaginatedA4Html(targetState = state) {
+      const blocks = buildDocumentBlocks(targetState);
+      const sandbox = document.getElementById('measure-sandbox');
+      if (!sandbox) return { html: '', totalPages: 1 };
+
+      const MAX_CONTENT_HEIGHT = 945;
+      const pages = [];
+      let currentPageBlocks = [];
+      let currentHeight = 0;
+
+      sandbox.innerHTML = '';
+      blocks.forEach((html) => {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = html;
+        sandbox.appendChild(wrapper);
+        const h = wrapper.offsetHeight + 16;
+
+        if (currentPageBlocks.length > 0 && (currentHeight + h) > MAX_CONTENT_HEIGHT) {
+          pages.push(currentPageBlocks);
+          currentPageBlocks = [html];
+          currentHeight = h;
+        } else {
+          currentPageBlocks.push(html);
+          currentHeight += h;
+        }
+      });
+
+      if (currentPageBlocks.length > 0) {
+        pages.push(currentPageBlocks);
+      }
+
+      const totalPages = pages.length || 1;
+      const html = pages.map((pageBlocks, idx) => `
+        <div class="a4-page rounded-sm">
+          <div class="flex-1">
+            ${pageBlocks.join('')}
+          </div>
+          <div class="pt-3 border-t border-stone-300 flex items-center justify-between text-[10px] text-stone-500 font-sans">
+            <span>${escapeHtml(targetState.meta.orgName || 'Board Minutes')} — ${escapeHtml(targetState.meta.meetingNumber || '')} (${escapeHtml(targetState.meta.meetingDate || '')})</span>
+            <span class="font-semibold text-stone-800">Page ${idx + 1} of ${totalPages}</span>
+          </div>
+        </div>
+      `).join('');
+
+      return { html, totalPages };
+    }
+
+    function renderA4Pages() {
+      const container = document.getElementById('a4-pages-container');
+      if (!container) return;
+
+      const { html, totalPages } = generatePaginatedA4Html(state);
+      const indicator = document.getElementById('page-count-indicator');
+      if (indicator) {
+        indicator.textContent = `${totalPages} ${totalPages === 1 ? 'Page (A4)' : 'Pages (A4)'}`;
+      }
+      container.innerHTML = html;
+    }
+
+    // TEMPLATES
+    function openSaveTemplateFromCurrent() {
+      const suggested = state.meta.orgName
+        ? `${state.meta.orgName} — Standard Template`
+        : 'Custom Board Meeting Template';
+      openTemplatesPage();
+      const input = document.getElementById('new-template-name');
+      if (input) {
+        input.value = suggested;
+        input.focus();
+      }
+    }
+
+    function renderTemplatesList() {
+      const container = document.getElementById('templates-list-container');
+      const banner = document.getElementById('editing-template-banner');
+      const bannerLabel = document.getElementById('editing-template-label');
+
+      if (activeTemplateId) {
+        const activeTpl = templates.find(t => t.id === activeTemplateId);
+        if (activeTpl) {
+          banner.classList.remove('hidden');
+          banner.classList.add('flex');
+          bannerLabel.textContent = `Editing template: "${activeTpl.name}"`;
+        } else {
+          activeTemplateId = null;
+          banner.classList.add('hidden');
+          banner.classList.remove('flex');
+        }
+      } else {
+        banner.classList.add('hidden');
+        banner.classList.remove('flex');
+      }
+
+      if (templates.length === 0) {
+        container.innerHTML = `
+          <div class="py-8 text-center text-sm text-warm-muted border border-dashed border-warm-border rounded-xl">
+            No saved templates yet. Save your current workspace above to create a template.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = templates.map((tpl, idx) => {
+        const org = tpl.data?.meta?.orgName || 'Unspecified Organization';
+        const itemsCount = tpl.data?.agenda?.length || 0;
+        const peopleCount = tpl.data?.attendees?.length || 0;
+        const isEditingThis = activeTemplateId === tpl.id;
+
+        return `
+          <div class="p-4 rounded-xl bg-[#FAF8F4] border ${isEditingThis ? 'border-amber-700 ring-1 ring-amber-700/30' : 'border-warm-border'} flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-1 flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <input type="text" value="${escapeHtml(tpl.name)}"
+                  onchange="renameTemplate(${idx}, this.value)"
+                  class="font-semibold text-sm text-warm-text bg-transparent hover:bg-white focus:bg-white px-2 py-0.5 -ml-2 rounded-lg border border-transparent focus:border-warm-border focus:outline-none w-full max-w-md" />
+                ${isEditingThis ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 shrink-0">Active in Editor</span>' : ''}
+              </div>
+              <div class="text-xs text-warm-muted flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span><strong>Org:</strong> ${escapeHtml(org)}</span>
+                <span>•</span>
+                <span><strong>${peopleCount}</strong> Participants</span>
+                <span>•</span>
+                <span><strong>${itemsCount}</strong> Agenda Items</span>
+                <span>•</span>
+                <span>Updated ${escapeHtml(tpl.updatedAt || '—')}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <button id="tpl-dl-btn-${tpl.id}" onclick="downloadTemplatePDF('${tpl.id}')"
+                class="px-3.5 py-2 rounded-xl bg-amber-800 hover:bg-amber-900 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>PDF</span>
+              </button>
+              <button onclick="loadTemplateIntoWorkspace('${tpl.id}', false)"
+                class="px-3.5 py-2 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-xs font-semibold inline-flex items-center gap-1.5 transition">
+                <i data-lucide="folder-down" class="w-3.5 h-3.5"></i>
+                <span>Load</span>
+              </button>
+              <button onclick="loadTemplateIntoWorkspace('${tpl.id}', true)"
+                class="px-3.5 py-2 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-warm-text text-xs font-medium inline-flex items-center gap-1.5 transition"
+                title="Load into workspace to modify and overwrite this template">
+                <i data-lucide="pencil" class="w-3.5 h-3.5 text-amber-800"></i>
+                <span>Edit Template</span>
+              </button>
+              <button onclick="deleteTemplate(${idx})"
+                class="p-2 rounded-xl text-stone-400 hover:text-rose-700 hover:bg-rose-50 transition" title="Delete template">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function saveWorkspaceAsTemplate() {
+      const nameInput = document.getElementById('new-template-name');
+      const name = (nameInput.value || '').trim() || `${state.meta.orgName || 'Board Meeting'} Template`;
+      const copy = JSON.parse(JSON.stringify(state));
+
+      const newTpl = {
+        id: 'tpl_' + Date.now(),
+        name,
+        updatedAt: new Date().toISOString().slice(0, 10),
+        data: copy
+      };
+
+      templates.unshift(newTpl);
+      activeTemplateId = newTpl.id;
+      nameInput.value = '';
+      saveTemplates();
+      renderTemplatesList();
+    }
+
+    function updateCurrentlyEditedTemplate() {
+      if (!activeTemplateId) return;
+      const idx = templates.findIndex(t => t.id === activeTemplateId);
+      if (idx === -1) return;
+
+      const copy = JSON.parse(JSON.stringify(state));
+      templates[idx].data = copy;
+      templates[idx].updatedAt = new Date().toISOString().slice(0, 10);
+      saveTemplates();
+      renderTemplatesList();
+    }
+
+    function renameTemplate(idx, newName) {
+      if (!templates[idx]) return;
+      templates[idx].name = newName.trim() || 'Untitled Template';
+      templates[idx].updatedAt = new Date().toISOString().slice(0, 10);
+      saveTemplates();
+    }
+
+    function loadTemplateIntoWorkspace(tplId, editMode = false) {
+      const tpl = templates.find(t => t.id === tplId);
+      if (!tpl) return;
+      state = JSON.parse(JSON.stringify(tpl.data));
+      activeAgendaIndex = 0;
+      activeTemplateId = editMode ? tpl.id : null;
+      activeRegisterId = null;
+      saveState();
+      goToStep(1);
+    }
+
+    function deleteTemplate(idx) {
+      const removed = templates.splice(idx, 1)[0];
+      if (removed && removed.id === activeTemplateId) {
+        activeTemplateId = null;
+      }
+      saveTemplates();
+      renderTemplatesList();
+    }
+
+    // MEETINGS REGISTER
+    function saveCurrentMeetingToRegister() {
+      const btn = document.getElementById('save-register-btn');
+      const copy = JSON.parse(JSON.stringify(state));
+      const nowStr = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+      if (activeRegisterId) {
+        const existingIdx = meetingsRegister.findIndex(m => m.id === activeRegisterId);
+        if (existingIdx !== -1) {
+          meetingsRegister[existingIdx].data = copy;
+          meetingsRegister[existingIdx].savedAt = nowStr;
+        } else {
+          const entry = { id: 'reg_' + Date.now(), savedAt: nowStr, data: copy };
+          meetingsRegister.unshift(entry);
+          activeRegisterId = entry.id;
+        }
+      } else {
+        const entry = { id: 'reg_' + Date.now(), savedAt: nowStr, data: copy };
+        meetingsRegister.unshift(entry);
+        activeRegisterId = entry.id;
+      }
+
+      saveRegister();
+
+      if (btn) {
+        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Saved to Register!</span>';
+        lucide.createIcons();
+        setTimeout(() => {
+          btn.innerHTML = '<i data-lucide="archive-restore" class="w-4 h-4"></i><span>Save to Meetings Register</span>';
+          lucide.createIcons();
+          openRegisterPage();
+        }, 600);
+      } else {
+        openRegisterPage();
+      }
+    }
+
+    function renderRegisterList() {
+      const container = document.getElementById('register-list-container');
+      if (!container) return;
+
+      if (meetingsRegister.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 text-center space-y-2 border border-dashed border-warm-border rounded-2xl">
+            <div class="w-10 h-10 rounded-xl bg-warm-surface text-warm-muted mx-auto flex items-center justify-center">
+              <i data-lucide="archive" class="w-5 h-5"></i>
+            </div>
+            <div class="text-sm font-semibold text-warm-text">No Saved Meetings in Register Yet</div>
+            <p class="text-xs text-warm-muted max-w-md mx-auto">Complete your meeting minutes and click "Save to Meetings Register" in Step 5 to archive and download official PDFs here.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = meetingsRegister.map((entry, idx) => {
+        const m = entry.data?.meta || {};
+        const org = m.orgName || 'Untitled Organization';
+        const num = m.meetingNumber || '#1';
+        const date = m.meetingDate || 'No date';
+        const itemsCount = entry.data?.agenda?.length || 0;
+        const attendeesCount = (entry.data?.attendees || []).filter(a => a.role !== 'Absent').length;
+
+        return `
+          <div class="p-4 rounded-xl bg-[#FAF8F4] border border-warm-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2.5">
+                <span class="font-serif font-bold text-sm sm:text-base text-warm-text">${escapeHtml(org)}</span>
+                <span class="px-2 py-0.5 rounded-md bg-warm-surface text-xs font-semibold text-amber-950 border border-warm-border">
+                  Minutes ${escapeHtml(num)}
+                </span>
+              </div>
+              <div class="text-xs text-warm-muted flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span><strong>Meeting Date:</strong> ${escapeHtml(date)}</span>
+                <span>•</span>
+                <span><strong>${attendeesCount}</strong> Present</span>
+                <span>•</span>
+                <span><strong>${itemsCount}</strong> Agenda Items</span>
+                <span>•</span>
+                <span>Saved ${escapeHtml(entry.savedAt || '')}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <button id="reg-dl-btn-${entry.id}" onclick="downloadRegisteredMeetingPDF('${entry.id}')"
+                class="px-3.5 py-2 rounded-xl bg-amber-800 hover:bg-amber-900 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Download PDF</span>
+              </button>
+              <button onclick="loadRegisteredMeetingIntoWorkspace('${entry.id}')"
+                class="px-3 py-2 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-warm-text text-xs font-medium inline-flex items-center gap-1.5 transition">
+                <i data-lucide="folder-open" class="w-3.5 h-3.5 text-amber-800"></i>
+                <span>Open / Edit</span>
+              </button>
+              <button onclick="deleteRegisteredMeeting(${idx})"
+                class="p-2 rounded-xl text-stone-400 hover:text-rose-700 hover:bg-rose-50 transition" title="Remove from Register">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function loadRegisteredMeetingIntoWorkspace(regId) {
+      const found = meetingsRegister.find(m => m.id === regId);
+      if (!found) return;
+      state = JSON.parse(JSON.stringify(found.data));
+      activeAgendaIndex = 0;
+      activeRegisterId = found.id;
+      activeTemplateId = null;
+      saveState();
+      goToStep(5);
+    }
+
+    function deleteRegisteredMeeting(idx) {
+      const removed = meetingsRegister.splice(idx, 1)[0];
+      if (removed && removed.id === activeRegisterId) {
+        activeRegisterId = null;
+      }
+      saveRegister();
+      renderRegisterList();
+    }
+
+    // ==========================================================
+    // 100% PIXEL-IDENTICAL A4 PREVIEW TO PDF ENGINE
+    // Renders the exact HTML from generatePaginatedA4Html(data)
+    // and captures each .a4-page using the browser's native
+    // renderer (modern-screenshot) so it is 100% identical to Step 5.
+    // ==========================================================
+    async function generateAndDownloadPDF(data, filename, btnId) {
+      const btn = btnId ? document.getElementById(btnId) : null;
+      let origHtml = '';
+      if (btn) {
+        origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Exporting...</span>';
+        lucide.createIcons();
+      }
+
+      // Create an isolated, on-screen stage behind a subtle loading overlay so the browser
+      // paints the exact .a4-page DOM elements at 794x1122px with full fonts and Tailwind styles.
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 z-[99999] bg-[#F5F2EB]/95 backdrop-blur-xs flex flex-col items-center justify-center no-print';
+      overlay.innerHTML = `
+        <div class="w-11 h-11 rounded-full border-4 border-amber-900/20 border-t-amber-800 animate-spin mb-3"></div>
+        <div class="text-base font-serif font-bold text-warm-text">Preparing Exact A4 PDF...</div>
+        <div class="text-xs text-warm-muted mt-1">Capturing formal document pages</div>
+      `;
+      document.body.appendChild(overlay);
+
+      const stage = document.createElement('div');
+      stage.className = 'pdf-export-mode';
+      stage.style.cssText = 'position: fixed; top: 0; left: 0; width: 794px; z-index: 99990; pointer-events: none; background: #FFFFFF;';
+
+      // Use the EXACT same HTML generator that powers the Step 5 Formal A4 Document Preview
+      const { html } = generatePaginatedA4Html(data);
+      stage.innerHTML = html;
+      document.body.appendChild(stage);
+
+      try {
+        // Ensure Google Fonts (Libre Baskerville & Inter) and layout are completely ready
+        if (document.fonts && document.fonts.ready) {
+          await document.fonts.ready;
+        }
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        await new Promise(r => setTimeout(r, 150));
+
+        const pages = Array.from(stage.querySelectorAll('.a4-page'));
+        if (pages.length === 0) {
+          throw new Error('No A4 pages found to export');
+        }
+
+        const jsPDFConstructor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        const pdf = new jsPDFConstructor({
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait',
+          compress: true
+        });
+
+        for (let i = 0; i < pages.length; i++) {
+          const pageEl = pages[i];
+          if (i > 0) {
+            pdf.addPage('a4', 'portrait');
+          }
+
+          // Capture the exact .a4-page element at 2.5x retina resolution
+          const canvas = await window.modernScreenshot.domToCanvas(pageEl, {
+            scale: 2.5,
+            width: 794,
+            height: 1122,
+            backgroundColor: '#FFFFFF',
+            style: {
+              margin: '0',
+              boxShadow: 'none',
+              transform: 'none'
+            }
+          });
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.98);
+          pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        }
+
+        pdf.save(filename);
+      } catch (err) {
+        console.error('Exact A4 capture failed:', err);
+      } finally {
+        if (stage.parentNode) stage.parentNode.removeChild(stage);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origHtml;
+          lucide.createIcons();
+        }
+      }
+    }
+
+    function downloadCurrentWorkspacePDF() {
+      const safeOrg = (state.meta?.orgName || 'Board-Minutes').replace(/[^a-zA-Z0-9-_]/g, '_');
+      const safeDate = state.meta?.meetingDate || 'Document';
+      const filename = `${safeOrg}_Minutes_${safeDate}.pdf`;
+      generateAndDownloadPDF(state, filename, 'step5-dl-btn');
+    }
+
+    function downloadRegisteredMeetingPDF(regId) {
+      const entry = meetingsRegister.find(m => m.id === regId);
+      if (!entry) return;
+      const safeOrg = (entry.data.meta?.orgName || 'Board-Minutes').replace(/[^a-zA-Z0-9-_]/g, '_');
+      const safeDate = entry.data.meta?.meetingDate || 'Document';
+      const filename = `${safeOrg}_Minutes_${safeDate}.pdf`;
+      generateAndDownloadPDF(entry.data, filename, `reg-dl-btn-${regId}`);
+    }
+
+    function downloadTemplatePDF(tplId) {
+      const entry = templates.find(t => t.id === tplId);
+      if (!entry) return;
+      const safeName = (entry.name || 'Template').replace(/[^a-zA-Z0-9-_]/g, '_');
+      const filename = `${safeName}_Preview.pdf`;
+      generateAndDownloadPDF(entry.data, filename, `tpl-dl-btn-${tplId}`);
+    }
+
+    // RESET MODAL
+    function openResetModal() {
+      const modal = document.getElementById('reset-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById('reset-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function confirmResetData() {
+      state = getBlankState();
+      activeAgendaIndex = 0;
+      activeTemplateId = null;
+      activeRegisterId = null;
+      saveState();
+      closeResetModal();
+      goToStep(1);
+    }
+
+    // INITIALIZATION
+    window.addEventListener('DOMContentLoaded', () => {
+      updateRegisterCountPill();
+      syncStep1Inputs();
+      goToStep(1);
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
