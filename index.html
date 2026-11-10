@@ -117,12 +117,12 @@
       <!-- Top Single-Line Row -->
       <div class="h-16 flex items-center justify-between gap-4 whitespace-nowrap overflow-x-auto">
         <!-- Brand & Attribution strictly on one horizontal line -->
-        <div class="flex items-center gap-3 shrink-0">
-          <div class="w-9 h-9 rounded-xl bg-warm-dark text-[#FCFBF9] flex items-center justify-center shadow-sm shrink-0">
+        <div class="flex items-center gap-3 shrink-0 cursor-pointer group" onclick="goToHome()" title="Return to Home">
+          <div class="w-9 h-9 rounded-xl bg-warm-dark text-[#FCFBF9] flex items-center justify-center shadow-sm shrink-0 group-hover:bg-warm-darkHover transition">
             <i data-lucide="scroll-text" class="w-5 h-5 text-amber-400"></i>
           </div>
           <div class="flex items-center gap-2.5">
-            <span class="font-serif font-bold text-base sm:text-lg tracking-tight text-warm-text whitespace-nowrap">
+            <span class="font-serif font-bold text-base sm:text-lg tracking-tight text-warm-text whitespace-nowrap group-hover:text-amber-900 transition">
               Meeting Minutes Pro
             </span>
             <span class="text-stone-300">|</span>
@@ -138,11 +138,11 @@
             <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
             <span>Draft saved</span>
           </span>
-          <button onclick="openTemplatesModal()" title="Manage & Load Templates" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-warm-text hover:bg-warm-surface bg-warm-card border border-warm-border transition">
+          <button onclick="openTemplatesPage()" title="Manage & Load Templates" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-warm-text hover:bg-warm-surface bg-warm-card border border-warm-border transition">
             <i data-lucide="layout-template" class="w-3.5 h-3.5 text-amber-800"></i>
             <span>Templates</span>
           </button>
-          <button onclick="openRegisterModal()" title="View Saved Meetings Register" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-warm-text hover:bg-warm-surface bg-warm-card border border-warm-border transition">
+          <button onclick="openRegisterPage()" title="View Saved Meetings Register" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-warm-text hover:bg-warm-surface bg-warm-card border border-warm-border transition">
             <i data-lucide="archive" class="w-3.5 h-3.5 text-amber-800"></i>
             <span>Meetings Register</span>
             <span id="register-count-pill" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-900/15 text-amber-950">0</span>
@@ -211,7 +211,7 @@
             <span>Organization Information</span>
           </h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="sm:col-span-2">
+            <div>
               <label for="org-name" class="block text-xs font-medium text-warm-muted mb-1">Organization / Company Name</label>
               <input id="org-name" type="text" placeholder="e.g., Nordic Horizon AB"
                 oninput="updateMeta('orgName', this.value)"
@@ -222,17 +222,6 @@
               <input id="org-number" type="text" placeholder="e.g., 556912-4821"
                 oninput="updateMeta('orgNumber', this.value)"
                 class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
-            </div>
-            <div>
-              <label for="org-type" class="block text-xs font-medium text-warm-muted mb-1">Organization Type</label>
-              <select id="org-type" onchange="updateMeta('orgType', this.value)"
-                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F4] border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30">
-                <option value="Limited Company (AB / Corp)">Limited Company (AB / Corp)</option>
-                <option value="Housing Cooperative (BRF / HOA)">Housing Cooperative (BRF / HOA)</option>
-                <option value="Non-Profit Association (Ideell förening)">Non-Profit Association (Ideell förening)</option>
-                <option value="Economic Association (Ekonomisk förening)">Economic Association (Ekonomisk förening)</option>
-                <option value="Foundation (Stiftelse)">Foundation (Stiftelse)</option>
-              </select>
             </div>
           </div>
         </div>
@@ -275,7 +264,7 @@
 
         <!-- Step Footer -->
         <div class="pt-4 border-t border-warm-border flex items-center justify-between">
-          <button onclick="openTemplatesModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FAF8F4] hover:bg-warm-surface border border-warm-border text-xs sm:text-sm font-medium text-warm-text transition">
+          <button onclick="openTemplatesPage()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FAF8F4] hover:bg-warm-surface border border-warm-border text-xs sm:text-sm font-medium text-warm-text transition">
             <i data-lucide="layout-template" class="w-4 h-4 text-amber-800"></i>
             <span>Load a Saved Template</span>
           </button>
@@ -457,7 +446,7 @@
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             <span>Back to Editor</span>
           </button>
-          <button onclick="openSaveTemplateFromCurrentModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
+          <button onclick="openSaveTemplateFromCurrent()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
             <i data-lucide="bookmark-plus" class="w-4 h-4 text-amber-800"></i>
             <span>Save as Template</span>
           </button>
@@ -509,6 +498,74 @@
       </div>
     </section>
 
+    <!-- ========================================================== -->
+    <!-- TEMPLATES MANAGER PAGE                                     -->
+    <!-- ========================================================== -->
+    <section id="page-templates" class="hidden max-w-4xl mx-auto space-y-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-900/10 text-amber-900 flex items-center justify-center shrink-0">
+            <i data-lucide="layout-template" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-serif font-bold text-warm-text">Meeting Templates</h1>
+            <p class="mt-1 text-sm text-warm-muted">Load, edit, download, or create reusable board meeting templates.</p>
+          </div>
+        </div>
+        <button onclick="goToHome()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Back to Workspace</span>
+        </button>
+      </div>
+
+      <div class="bg-warm-card rounded-2xl border border-warm-border p-6 shadow-sm space-y-6">
+        <!-- Save Current Workspace as Template Bar -->
+        <div class="p-4 rounded-xl bg-[#FAF8F4] border border-warm-border space-y-3">
+          <div class="text-xs font-semibold uppercase tracking-wider text-warm-muted">Save Current Workspace as New Template</div>
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <input id="new-template-name" type="text" placeholder="Template Name (e.g., Standard Board Meeting — BRF)"
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-warm-border text-sm text-warm-text focus:outline-none focus:ring-2 focus:ring-amber-700/30" />
+            <button onclick="saveWorkspaceAsTemplate()" class="px-5 py-2.5 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-sm font-semibold inline-flex items-center justify-center gap-1.5 shrink-0 transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Save as Template</span>
+            </button>
+          </div>
+          <div id="editing-template-banner" class="hidden items-center justify-between gap-2 pt-2 border-t border-warm-border text-xs text-amber-900">
+            <span id="editing-template-label" class="font-medium">Currently editing template</span>
+            <button onclick="updateCurrentlyEditedTemplate()" class="px-3 py-1.5 rounded-lg bg-amber-800 hover:bg-amber-900 text-white font-semibold transition shadow-sm">
+              Overwrite Template with Current Workspace
+            </button>
+          </div>
+        </div>
+
+        <!-- Templates List -->
+        <div class="space-y-3" id="templates-list-container"></div>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- MEETINGS REGISTER PAGE                                     -->
+    <!-- ========================================================== -->
+    <section id="page-register" class="hidden max-w-5xl mx-auto space-y-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-900/10 text-amber-900 flex items-center justify-center shrink-0">
+            <i data-lucide="archive" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-serif font-bold text-warm-text">Saved Meetings Register</h1>
+            <p class="mt-1 text-sm text-warm-muted">Download official PDFs, reopen past minutes for editing, or manage your archived meetings.</p>
+          </div>
+        </div>
+        <button onclick="goToHome()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-sm font-medium text-warm-text transition">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Back to Workspace</span>
+        </button>
+      </div>
+
+      <div class="bg-warm-card rounded-2xl border border-warm-border p-6 shadow-sm space-y-4" id="register-list-container"></div>
+    </section>
+
   </main>
 
   <!-- PERSISTENT MINIMAL FOOTER (Single attribution in footer) -->
@@ -521,8 +578,8 @@
 
   <!-- HIDDEN OFF-SCREEN MEASURING CONTAINER FOR ACCURATE A4 PAGINATION -->
   <div id="measure-sandbox" class="fixed -left-[9999px] top-0 w-[666px] pointer-events-none opacity-0" aria-hidden="true"></div>
-  <!-- HIDDEN OFF-SCREEN PDF EXPORT CONTAINER FOR REGISTER DOWNLOADS -->
-  <div id="register-pdf-sandbox" class="fixed -left-[9999px] top-0 w-[794px] pointer-events-none opacity-0 pdf-export-mode" aria-hidden="true"></div>
+
+  <!-- RESET CONFIRMATION MODAL -->
 
   <!-- TEMPLATES MANAGER MODAL -->
   <div id="templates-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/40 backdrop-blur-xs p-4 no-print">
@@ -644,7 +701,6 @@
         meta: {
           orgName: '',
           orgNumber: '',
-          orgType: 'Limited Company (AB / Corp)',
           meetingNumber: '',
           meetingDate: new Date().toISOString().slice(0, 10),
           startTime: '',
@@ -667,7 +723,6 @@
         meta: {
           orgName: 'Nordic Horizon AB',
           orgNumber: '556912-4821',
-          orgType: 'Limited Company (AB / Corp)',
           meetingNumber: 'No. 4 / 2026',
           meetingDate: '2026-11-10',
           startTime: '14:00',
@@ -853,28 +908,44 @@
     }
 
     // ==========================================================
-    // NAVIGATION BETWEEN STEPS
+    // NAVIGATION BETWEEN STEPS & PAGES
     // ==========================================================
+    function updateStepperUI(activeStep) {
+      for (let i = 1; i <= 5; i++) {
+        const tab = document.getElementById(`step-tab-${i}`);
+        if (!tab) continue;
+        const badge = tab.querySelector('.step-badge');
+        if (activeStep === i) {
+          tab.className = 'step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-warm-dark text-[#FCFBF9] shadow-xs transition';
+          if (badge) badge.className = 'step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-amber-500 text-stone-950';
+        } else if (activeStep > 0 && i < activeStep) {
+          tab.className = 'step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-warm-text hover:bg-warm-surface transition';
+          if (badge) badge.className = 'step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold bg-amber-900/15 text-amber-900';
+        } else {
+          tab.className = 'step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-warm-muted hover:text-warm-text hover:bg-warm-surface/60 transition';
+          if (badge) badge.className = 'step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold bg-warm-surface text-warm-muted';
+        }
+      }
+    }
+
+    function goToHome() {
+      goToStep(currentStep || 1);
+    }
+
     function goToStep(stepNumber) {
       currentStep = stepNumber;
+
+      const tplPage = document.getElementById('page-templates');
+      const regPage = document.getElementById('page-register');
+      if (tplPage) tplPage.classList.add('hidden');
+      if (regPage) regPage.classList.add('hidden');
+      
+      updateStepperUI(stepNumber);
+
       for (let i = 1; i <= 5; i++) {
         const panel = document.getElementById(`step-${i}`);
-        const tab = document.getElementById(`step-tab-${i}`);
         if (panel) {
           panel.classList.toggle('hidden', i !== stepNumber);
-        }
-        if (tab) {
-          const badge = tab.querySelector('.step-badge');
-          if (i === stepNumber) {
-            tab.className = 'step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-warm-dark text-[#FCFBF9] shadow-xs transition';
-            if (badge) badge.className = 'step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-amber-500 text-stone-950';
-          } else if (i < stepNumber) {
-            tab.className = 'step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-warm-text hover:bg-warm-surface transition';
-            if (badge) badge.className = 'step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold bg-amber-900/15 text-amber-900';
-          } else {
-            tab.className = 'step-tab group flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-warm-muted hover:text-warm-text hover:bg-warm-surface/60 transition';
-            if (badge) badge.className = 'step-badge w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold bg-warm-surface text-warm-muted';
-          }
         }
       }
 
@@ -888,13 +959,38 @@
       lucide.createIcons();
     }
 
+    function openTemplatesPage() {
+      for (let i = 1; i <= 5; i++) {
+        const p = document.getElementById(`step-${i}`);
+        if(p) p.classList.add('hidden');
+      }
+      document.getElementById('page-register').classList.add('hidden');
+      document.getElementById('page-templates').classList.remove('hidden');
+      updateStepperUI(0); // Mark stepper inactive
+      renderTemplatesList();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    function openRegisterPage() {
+      for (let i = 1; i <= 5; i++) {
+        const p = document.getElementById(`step-${i}`);
+        if(p) p.classList.add('hidden');
+      }
+      document.getElementById('page-templates').classList.add('hidden');
+      document.getElementById('page-register').classList.remove('hidden');
+      updateStepperUI(0); // Mark stepper inactive
+      renderRegisterList();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
     // ==========================================================
     // STEP 1: METADATA
     // ==========================================================
     function syncStep1Inputs() {
       document.getElementById('org-name').value = state.meta.orgName || '';
       document.getElementById('org-number').value = state.meta.orgNumber || '';
-      document.getElementById('org-type').value = state.meta.orgType || 'Limited Company (AB / Corp)';
       document.getElementById('meeting-number').value = state.meta.meetingNumber || '';
       document.getElementById('meeting-date').value = state.meta.meetingDate || '';
       document.getElementById('start-time').value = state.meta.startTime || '';
@@ -1521,7 +1617,7 @@
               <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500">Official Board Minutes</div>
               <h1 class="text-2xl font-serif font-bold text-stone-950 mt-1">${escapeHtml(m.orgName || 'Organization Name')}</h1>
               <div class="text-xs text-stone-600 mt-0.5">
-                ${escapeHtml(m.orgType || '')} ${m.orgNumber ? `• Reg. No: ${escapeHtml(m.orgNumber)}` : ''}
+                ${m.orgNumber ? `Reg. No: ${escapeHtml(m.orgNumber)}` : ''}
               </div>
             </div>
             <div class="text-right">
@@ -1702,25 +1798,11 @@
     // ==========================================================
     // TEMPLATES MANAGEMENT (LOAD, SAVE, EDIT, DELETE)
     // ==========================================================
-    function openTemplatesModal() {
-      const modal = document.getElementById('templates-modal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      renderTemplatesList();
-      lucide.createIcons();
-    }
-
-    function closeTemplatesModal() {
-      const modal = document.getElementById('templates-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function openSaveTemplateFromCurrentModal() {
+    function openSaveTemplateFromCurrent() {
       const suggested = state.meta.orgName
         ? `${state.meta.orgName} — Standard Template`
         : 'Custom Board Meeting Template';
-      openTemplatesModal();
+      openTemplatesPage();
       const input = document.getElementById('new-template-name');
       if (input) {
         input.value = suggested;
@@ -1785,19 +1867,24 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <button id="tpl-dl-btn-${tpl.id}" onclick="downloadTemplatePDF('${tpl.id}')"
+                class="px-3.5 py-2 rounded-xl bg-amber-800 hover:bg-amber-900 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>PDF</span>
+              </button>
               <button onclick="loadTemplateIntoWorkspace('${tpl.id}', false)"
-                class="px-3 py-1.5 rounded-lg bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-xs font-semibold inline-flex items-center gap-1.5 transition">
+                class="px-3.5 py-2 rounded-xl bg-warm-dark hover:bg-warm-darkHover text-[#FCFBF9] text-xs font-semibold inline-flex items-center gap-1.5 transition">
                 <i data-lucide="folder-down" class="w-3.5 h-3.5"></i>
                 <span>Load</span>
               </button>
               <button onclick="loadTemplateIntoWorkspace('${tpl.id}', true)"
-                class="px-3 py-1.5 rounded-lg bg-warm-card hover:bg-warm-surface border border-warm-border text-warm-text text-xs font-medium inline-flex items-center gap-1.5 transition"
+                class="px-3.5 py-2 rounded-xl bg-warm-card hover:bg-warm-surface border border-warm-border text-warm-text text-xs font-medium inline-flex items-center gap-1.5 transition"
                 title="Load into workspace to modify and overwrite this template">
                 <i data-lucide="pencil" class="w-3.5 h-3.5 text-amber-800"></i>
                 <span>Edit Template</span>
               </button>
               <button onclick="deleteTemplate(${idx})"
-                class="p-1.5 rounded-lg text-stone-400 hover:text-rose-700 hover:bg-rose-50 transition" title="Delete template">
+                class="p-2 rounded-xl text-stone-400 hover:text-rose-700 hover:bg-rose-50 transition" title="Delete template">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
               </button>
             </div>
@@ -1853,7 +1940,6 @@
       activeTemplateId = editMode ? tpl.id : null;
       activeRegisterId = null;
       saveState();
-      closeTemplatesModal();
       goToStep(1);
     }
 
@@ -1899,25 +1985,11 @@
         setTimeout(() => {
           btn.innerHTML = orig;
           lucide.createIcons();
-          openRegisterModal();
+          openRegisterPage();
         }, 650);
       } else {
-        openRegisterModal();
+        openRegisterPage();
       }
-    }
-
-    function openRegisterModal() {
-      const modal = document.getElementById('register-modal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      renderRegisterList();
-      lucide.createIcons();
-    }
-
-    function closeRegisterModal() {
-      const modal = document.getElementById('register-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
     }
 
     function renderRegisterList() {
@@ -1997,7 +2069,6 @@
       activeRegisterId = found.id;
       activeTemplateId = null;
       saveState();
-      closeRegisterModal();
       goToStep(5);
     }
 
@@ -2010,48 +2081,89 @@
       renderRegisterList();
     }
 
-    async function downloadRegisteredMeetingPDF(regId) {
-      const entry = meetingsRegister.find(m => m.id === regId);
-      if (!entry) return;
-
-      const btn = document.getElementById(`reg-dl-btn-${regId}`);
-      const sandbox = document.getElementById('register-pdf-sandbox');
-      if (!sandbox) return;
-
+    // PDF Download Logic for both Registers and Templates
+    async function generateAndDownloadPDF(data, filename, btnId) {
+      const btn = document.getElementById(btnId);
       let origHtml = '';
       if (btn) {
         origHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Generating...</span>';
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Wait...</span>';
         lucide.createIcons();
       }
 
-      const { html } = generatePaginatedA4Html(entry.data);
-      sandbox.innerHTML = html;
+      // 1. Create a full-screen loading overlay to gracefully hide the rendering process
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 z-[99999] bg-[#F5F2EB] flex flex-col items-center justify-center';
+      overlay.innerHTML = `
+        <div class="w-12 h-12 rounded-full border-4 border-amber-900/20 border-t-amber-800 animate-spin mb-4"></div>
+        <div class="text-xl font-serif font-bold text-warm-text">Generating Official PDF</div>
+        <div class="text-sm text-warm-muted mt-2">Please wait a moment while we format the pages...</div>
+      `;
+      document.body.appendChild(overlay);
 
-      const safeOrg = (entry.data.meta?.orgName || 'Board-Minutes').replace(/[^a-zA-Z0-9-_]/g, '_');
-      const safeDate = entry.data.meta?.meetingDate || 'Document';
-      const filename = `${safeOrg}_Minutes_${safeDate}.pdf`;
+      // 2. Create the container physically visible on top of everything, but hidden beneath the overlay
+      // html2canvas requires the element to be actively visible in the viewport to prevent blank renders.
+      const container = document.createElement('div');
+      container.className = 'pdf-export-mode';
+      container.style.position = 'absolute';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '794px';
+      container.style.zIndex = '99998';
+      container.style.backgroundColor = '#FFFFFF';
+      
+      const { html } = generatePaginatedA4Html(data);
+      container.innerHTML = html;
+      document.body.appendChild(container);
 
       try {
+        // Wait a fraction of a second for Tailwind classes to fully apply and the browser to paint
+        await new Promise(r => setTimeout(r, 400));
+
         const opt = {
           margin: 0,
           filename,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, backgroundColor: '#FFFFFF' },
+          image: { type: 'jpeg', quality: 1.0 },
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            backgroundColor: '#FFFFFF', 
+            windowWidth: 794,
+            scrollY: 0
+          },
           jsPDF: { unit: 'px', format: [794, 1122], orientation: 'portrait' }
         };
-        await html2pdf().set(opt).from(sandbox).save();
+        await html2pdf().set(opt).from(container).save();
       } catch (err) {
-        console.error('PDF export error from register:', err);
+        console.error('PDF export error:', err);
       } finally {
-        sandbox.innerHTML = '';
+        // 3. Clean up the DOM
+        document.body.removeChild(container);
+        document.body.removeChild(overlay);
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = origHtml;
           lucide.createIcons();
         }
       }
+    }
+
+    function downloadRegisteredMeetingPDF(regId) {
+      const entry = meetingsRegister.find(m => m.id === regId);
+      if (!entry) return;
+      const safeOrg = (entry.data.meta?.orgName || 'Board-Minutes').replace(/[^a-zA-Z0-9-_]/g, '_');
+      const safeDate = entry.data.meta?.meetingDate || 'Document';
+      const filename = `${safeOrg}_Minutes_${safeDate}.pdf`;
+      generateAndDownloadPDF(entry.data, filename, `reg-dl-btn-${regId}`);
+    }
+
+    function downloadTemplatePDF(tplId) {
+      const entry = templates.find(t => t.id === tplId);
+      if (!entry) return;
+      const safeName = (entry.name || 'Template').replace(/[^a-zA-Z0-9-_]/g, '_');
+      const filename = `${safeName}_Preview.pdf`;
+      generateAndDownloadPDF(entry.data, filename, `tpl-dl-btn-${tplId}`);
     }
 
     // ==========================================================
